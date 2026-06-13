@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service status</title>
+    {{if not .Debug}}<meta http-equiv="refresh" content="60">{{end}}
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+</head>
+<body class="bg-white font-sans text-sm text-gray-900">
+<div class="{{if .Data.Compact}}max-w-full{{else}}max-w-5xl{{end}} mx-auto px-4 py-5">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Service status</h1>
+            <p class="text-xs text-gray-400 mt-0.5">
+                Loaded <time datetime="{{.CurrentDateISO}}" data-time="true">{{.CurrentDateISO}}</time>, reloads every minute.
+            </p>
+        </div>
+
+        <!-- Status banner -->
+        {{if .Summary.Problem}}
+        <div class="border-2 border-black bg-[#ffd500] px-3 py-2 flex items-center gap-4 neo-shadow-lg sm:min-w-64">
+            <div class="flex-1">
+                <p class="font-semibold text-xs">Some services report problems.</p>
+                <div class="flex flex-wrap gap-1 mt-1">
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Problem: {{.Summary.Problem}}</span>
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">OK: {{.Summary.OK}}</span>
+                </div>
+            </div>
+            <i data-lucide="alert-circle" class="shrink-0 w-7 h-7"></i>
+        </div>
+        {{else}}
+        <div class="border-2 border-black bg-[#00c950] px-3 py-2 flex items-center gap-4 neo-shadow-lg sm:min-w-64">
+            <div class="flex-1">
+                <p class="font-semibold text-xs">Everything is ok.</p>
+                <div class="flex flex-wrap gap-1 mt-1">
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
+                </div>
+            </div>
+            <i data-lucide="check-circle" class="shrink-0 w-7 h-7"></i>
+        </div>
+        {{end}}
+    </div>
+
+    <hr class="border-black border-t-2 mb-4">
+
+    {{if .Data.Compact}}
+    <!-- Compact view -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 mb-4">
+        {{range .Data.Hosts}}
+        <div>{{template "card" .}}</div>
+        {{end}}
+    </div>
+    {{if .Data.History}}
+    <div class="flex flex-wrap gap-1 mt-2">
+        {{range .Data.History}}{{if .Resolved}}
+        <span class="border border-black text-[10px] px-1.5 py-0.5 font-mono bg-green-50 text-green-800">
+            <strong><time datetime="{{.ClockISO}}">{{.ClockISO}}</time></strong> {{.Name}}
+        </span>
+        {{end}}{{end}}
+    </div>
+    {{end}}
+
+    {{else if .Data.Micro}}
+    <!-- Micro view -->
+    <div class="border-2 border-black neo-shadow mb-4">
+        <div class="border-b-2 border-black px-3 py-1.5 bg-gray-50">
+            <span class="text-xs font-bold uppercase tracking-wide">Services</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2">
+            {{range .Data.Hosts}}
+            <div class="flex items-center justify-between border-b border-black px-3 py-1.5 last:border-b-0">
+                <span class="text-xs">{{.Label}}</span>
+                {{if .HasProblem}}
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-yellow-600 ml-2"></i>
+                {{else}}
+                    <i data-lucide="check-circle" class="w-4 h-4 text-green-600 ml-2"></i>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{if .Data.History}}
+    <div class="border-2 border-black neo-shadow">
+        <div class="border-b-2 border-black px-3 py-1.5 bg-gray-50">
+            <span class="text-xs font-bold uppercase tracking-wide">History</span>
+        </div>
+        {{range .Data.History}}{{if .Resolved}}
+        <div class="border-b border-black px-3 py-1.5 last:border-b-0">
+            <p class="text-[10px] text-gray-500 font-mono"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time></p>
+            <p class="text-xs">{{.Name}}</p>
+        </div>
+        {{end}}{{end}}
+    </div>
+    {{end}}
+
+    {{else}}
+    <!-- Normal view -->
+
+    {{if .Data.Upcoming}}
+    <div class="border-2 border-black bg-[#ffd500] p-3 mb-4 neo-shadow-lg">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <div class="sm:w-48 shrink-0">
+                <h2 class="font-bold text-sm">Planned service</h2>
+                <p class="text-xs text-gray-700 mt-1">Things we know about in advance that can cause problems.</p>
+            </div>
+            <div class="flex-1">
+                {{range .Data.Upcoming}}
+                <div class="mb-2 last:mb-0">
+                    <p class="font-semibold text-xs">{{.Name}}</p>
+                    <p class="text-[10px] font-mono mt-0.5">
+                        <i data-lucide="clock" class="inline w-3 h-3"></i>
+                        <time datetime="{{.SinceISO}}">{{.SinceISO}}</time> &ndash; <time datetime="{{.TillISO}}">{{.TillISO}}</time>
+                    </p>
+                    {{if .Description}}<p class="text-xs text-gray-700 mt-0.5">{{.Description}}</p>{{end}}
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+    <hr class="border-black mb-4">
+    {{end}}
+
+    <!-- Segments -->
+    {{range .Data.Segments}}
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+        <div class="sm:w-48 shrink-0">
+            <h2 class="font-bold text-sm">{{.Name}}</h2>
+            {{if .Description}}<p class="text-xs text-gray-500 mt-1">{{.Description}}</p>{{end}}
+        </div>
+        <div class="flex-1 flex flex-col gap-1.5">
+            {{range .Services}}{{template "card" .}}{{end}}
+        </div>
+    </div>
+    {{end}}
+
+    <hr class="border-black mb-4">
+
+    <!-- Past problems -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+        <div class="sm:w-48 shrink-0">
+            <h3 class="font-bold text-xs">Past problems</h3>
+            <p class="text-[10px] text-gray-400 mt-0.5 font-light">Problems reported the last couple of days.</p>
+        </div>
+        <div class="flex-1">
+            {{if .Data.History}}
+                {{range .Data.History}}{{if .Resolved}}
+                <div class="border-b border-gray-100 py-0.5 last:border-b-0">
+                    <span class="text-[9px] font-mono text-gray-300"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time></span>
+                    <span class="text-[10px] text-gray-700 font-light ml-1">{{.Name}}</span>
+                    <span class="text-[9px] text-gray-300 ml-1">{{.HostLabel}} &mdash; <time datetime="{{.ResolvedISO}}">{{.ResolvedISO}}</time></span>
+                </div>
+                {{end}}{{end}}
+            {{else}}
+                <p class="text-[10px] text-gray-400 font-light">Nothing to report.</p>
+            {{end}}
+        </div>
+    </div>
+
+    {{if .Data.ExternalStatuspages}}
+    <hr class="border-black mb-4">
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+        <div class="sm:w-48 shrink-0">
+            <h3 class="font-bold text-sm">External statuspages</h3>
+            <p class="text-xs text-gray-500 mt-1">More in-depth information about current status and past incidents.</p>
+        </div>
+        <div class="flex-1 flex flex-wrap gap-2">
+            {{range .Data.ExternalStatuspages}}
+            <div>
+                <a target="_blank" href="{{.URL}}" class="inline-block border border-black px-3 py-1 text-xs font-semibold hover:bg-black hover:text-white neo-shadow-sm">
+                    {{.Name}}
+                </a>
+                {{if .Description}}<p class="text-[10px] text-gray-400 mt-0.5">{{.Description}}</p>{{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+
+    {{end}}
+
+    <!-- Footer -->
+    <hr class="border-gray-200 mt-2 mb-3">
+    <footer class="flex justify-between items-center text-[10px] text-gray-400">
+        <span class="font-mono">zabbix-statuspage {{.Version}}</span>
+        <div class="flex gap-3">
+            {{if .Data.Compact}}
+                <a href="/" class="underline hover:text-black">Normal</a>
+                <a href="/?micro=1" class="underline hover:text-black">Micro</a>
+            {{else if .Data.Micro}}
+                <a href="/" class="underline hover:text-black">Normal</a>
+                <a href="/?compact=1" class="underline hover:text-black">Compact</a>
+            {{else}}
+                <a href="/?compact=1" class="underline hover:text-black">Compact</a>
+                <a href="/?micro=1" class="underline hover:text-black">Micro</a>
+            {{end}}
+        </div>
+    </footer>
+
+</div>
+<script src="/static/js/lucide.min.js"></script>
+<script>
+    lucide.createIcons();
+    document.querySelectorAll('time').forEach(function($e) {
+        var date = new Date($e.dateTime);
+        if ($e.dataset.time === 'true') {
+            $e.innerHTML = date.toLocaleTimeString();
+        } else {
+            $e.innerHTML = date.toLocaleString();
+        }
+    });
+    {{if not .Debug}}setTimeout(function(){ location.reload(); }, 60000);{{end}}
+</script>
+</body>
+</html>

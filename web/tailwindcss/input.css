@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@utility neo-shadow {
+  box-shadow: 2px 2px 0 #000;
+}
+
+@utility neo-shadow-sm {
+  box-shadow: 1px 1px 0 #000;
+}
+
+@utility neo-shadow-lg {
+  box-shadow: 4px 4px 0 #000;
+}

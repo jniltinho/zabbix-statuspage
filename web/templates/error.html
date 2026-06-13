@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service status — Error</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+</head>
+<body class="bg-white font-sans text-sm text-gray-800 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <h1 class="text-xl font-bold mb-5 tracking-tight">Service status</h1>
+        <div class="border-2 border-black bg-red-100 p-4 neo-shadow-lg">
+            <h2 class="font-bold text-red-800 mb-1 text-sm">Error loading status data</h2>
+            <p class="text-xs text-red-700">{{.Error}}</p>
+        </div>
+        <a href="/" class="inline-block mt-4 border-2 border-black px-4 py-1.5 text-xs font-semibold bg-white hover:bg-black hover:text-white neo-shadow">
+            Try again
+        </a>
+    </div>
+</body>
+</html>

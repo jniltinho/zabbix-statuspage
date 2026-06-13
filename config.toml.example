@@ -1,0 +1,75 @@
+# zabbix-statuspage configuration example
+# Copy this file to config.toml and fill in your values.
+
+# ─── Server ───────────────────────────────────────────────────────────────────
+
+[server]
+addr     = "0.0.0.0"  # bind address
+port     = 3000        # HTTP port (or HTTPS when tls = true)
+tls      = false       # enable HTTPS
+tls_cert = ""          # path to TLS certificate (required when tls = true)
+tls_key  = ""          # path to TLS private key  (required when tls = true)
+
+# ─── Zabbix API ───────────────────────────────────────────────────────────────
+
+[zabbix]
+api_url   = "https://zabbix.example.com/api_jsonrpc.php"
+api_token = "your-api-token-here"
+cache_ttl = 30  # seconds to cache Zabbix API responses
+
+# ─── Host tags (auto-discovery) ───────────────────────────────────────────────
+#
+# Hosts in Zabbix that carry ALL of these tags are shown on the status page
+# automatically — no [[segments]] configuration needed.
+#
+# To add a host: go to Configuration → Hosts → Tags in Zabbix and add the tag.
+# The same tags are used to filter which triggers appear on the page.
+
+[[trigger_tags]]
+tag   = "output"
+value = "statuspage"
+
+# ─── Segments (optional — manual mode) ────────────────────────────────────────
+#
+# When [[segments]] are defined, auto-discovery is disabled.
+# Hosts are read from the list below and grouped into named sections.
+# Remove or comment out all [[segments]] blocks to enable auto-discovery.
+
+# [[segments]]
+# name        = "Web Services"
+# description = "Public-facing web applications."
+#
+#   [[segments.services]]
+#   zabbix_host  = "www.example.com"        # exact hostname as configured in Zabbix
+#   display_host = "Website"                # optional: override display name
+#   description  = ""                       # optional: short description
+#
+#   [[segments.services]]
+#   zabbix_host  = "api.example.com"
+#   display_host = "API"
+
+# [[segments]]
+# name        = "Mail Infrastructure"
+# description = "Outbound and inbound mail servers."
+#
+#   [[segments.services]]
+#   zabbix_host  = "mx01.example.com"
+#   display_host = "MX01"
+#
+#   [[segments.services]]
+#   zabbix_host  = "mx02.example.com"
+#   display_host = "MX02"
+
+# ─── External status pages (optional) ─────────────────────────────────────────
+#
+# Links shown in the "External statuspages" section of the normal view.
+
+# [[external_statuspages]]
+# name        = "Provider A"
+# url         = "https://status.provider-a.com/"
+# description = "Status page for Provider A services."
+
+# [[external_statuspages]]
+# name        = "Provider B"
+# url         = "https://status.provider-b.com/"
+# description = "Cloud infrastructure status."

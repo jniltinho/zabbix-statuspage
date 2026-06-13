@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+bin/
+dist/
+openspec/
+.claude/
+.agent/
+.opencode/
+*.md
+Dockerfile
+.dockerignore
