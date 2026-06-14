@@ -10,7 +10,7 @@
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 </head>
 <body class="bg-white font-sans text-sm text-gray-900">
-<div class="{{if .Data.Compact}}max-w-full{{else}}max-w-5xl{{end}} mx-auto px-4 py-5">
+<div class="{{if .Data.Compact}}max-w-full{{else}}max-w-7xl{{end}} mx-auto px-4 py-5">
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
@@ -128,8 +128,8 @@
 
     <!-- Segments -->
     {{range $i, $seg := .Data.Segments}}
-    <div class="flex flex-col sm:flex-row gap-4 mb-6">
-        <div class="sm:w-48 shrink-0">
+    <div class="flex flex-col sm:flex-row gap-2 mb-6">
+        <div class="sm:w-24 shrink-0">
             <h2 class="font-bold text-sm">{{$seg.Name}}</h2>
             {{if $seg.Description}}<p class="text-xs text-gray-500 mt-1">{{$seg.Description}}</p>{{end}}
         </div>
@@ -146,12 +146,12 @@
     <hr class="border-black mb-4">
 
     <!-- Past problems -->
-    <div class="flex flex-col sm:flex-row gap-4 mb-6">
-        <div class="sm:w-48 shrink-0">
+    <div class="flex flex-col sm:flex-row gap-2 mb-6">
+        <div class="sm:w-24 shrink-0">
             <h3 class="font-bold text-xs">Past problems</h3>
             <p class="text-[10px] text-gray-400 mt-0.5 font-light">Problems reported the last couple of days.</p>
         </div>
-        <div class="flex-1">
+        <div class="flex-1 max-h-64 overflow-y-auto pr-1">
             {{if .Data.History}}
                 {{range .Data.History}}{{if .Resolved}}
                 <div class="border-b border-gray-100 py-0.5 last:border-b-0">
