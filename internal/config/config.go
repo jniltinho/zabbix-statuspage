@@ -11,11 +11,18 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Addr    string `mapstructure:"addr"`
-	Port    int    `mapstructure:"port"`
-	TLS     bool   `mapstructure:"tls"`
-	TLSCert string `mapstructure:"tls_cert"`
-	TLSKey  string `mapstructure:"tls_key"`
+	Addr      string          `mapstructure:"addr"`
+	Port      int             `mapstructure:"port"`
+	TLS       bool            `mapstructure:"tls"`
+	TLSCert   string          `mapstructure:"tls_cert"`
+	TLSKey    string          `mapstructure:"tls_key"`
+	BasicAuth BasicAuthConfig `mapstructure:"basic_auth"`
+}
+
+type BasicAuthConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 type ZabbixConfig struct {
@@ -58,6 +65,11 @@ func Validate(cfg *Config) error {
 	if cfg.Server.TLS {
 		if cfg.Server.TLSCert == "" || cfg.Server.TLSKey == "" {
 			return fmt.Errorf("tls_cert and tls_key are required when tls is enabled")
+		}
+	}
+	if cfg.Server.BasicAuth.Enabled {
+		if cfg.Server.BasicAuth.Username == "" || cfg.Server.BasicAuth.Password == "" {
+			return fmt.Errorf("server.basic_auth.username and server.basic_auth.password are required when basic_auth is enabled")
 		}
 	}
 	return nil

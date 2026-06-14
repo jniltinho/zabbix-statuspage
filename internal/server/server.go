@@ -46,7 +46,7 @@ func (s *Server) Start() error {
 
 	e := echo.New()
 	e.Renderer = renderer
-	registerRoutes(e, statusHandler, staticFS)
+	registerRoutes(e, statusHandler, staticFS, s.cfg)
 
 	addr := fmt.Sprintf("%s:%d", s.cfg.Server.Addr, s.cfg.Server.Port)
 

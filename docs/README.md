@@ -11,6 +11,7 @@
   - [Docker](#docker)
 - [Configuration](#configuration)
   - [Server](#server)
+  - [HTTP Basic Auth](#http-basic-auth)
   - [Zabbix API](#zabbix-api)
   - [Trigger tags](#trigger-tags)
   - [Auto-discovery mode](#auto-discovery-mode)
@@ -132,6 +133,34 @@ port     = 3000        # HTTP port
 tls      = false       # enable HTTPS
 tls_cert = ""          # path to certificate file (PEM)
 tls_key  = ""          # path to private key file (PEM)
+
+[server.basic_auth]
+enabled  = false  # set to true to password-protect the status page
+username = ""     # required when enabled = true
+password = ""     # required when enabled = true
+```
+
+When `basic_auth.enabled = true`, the browser will prompt for credentials before displaying the page. The password comparison uses constant-time comparison to prevent timing attacks.
+
+### HTTP Basic Auth
+
+To restrict access to the status page, enable HTTP Basic Auth:
+
+```toml
+[server.basic_auth]
+enabled  = true
+username = "admin"
+password = "your-password"
+```
+
+The browser will prompt for credentials on every visit. The check uses `crypto/subtle.ConstantTimeCompare` to prevent timing attacks. Both `username` and `password` are required when `enabled = true`.
+
+The credentials can also be set via environment variables:
+
+```bash
+STATUSPAGE_SERVER_BASIC_AUTH_ENABLED=true
+STATUSPAGE_SERVER_BASIC_AUTH_USERNAME=admin
+STATUSPAGE_SERVER_BASIC_AUTH_PASSWORD=your-password
 ```
 
 ### Zabbix API

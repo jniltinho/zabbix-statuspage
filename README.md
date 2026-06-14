@@ -15,6 +15,7 @@ Turn your existing Zabbix setup into a beautiful status page — no extra databa
 - **Embedded assets** — templates, CSS, and JS compiled into the binary, no static files needed
 - **Docker-ready** — multi-stage build, single image under 20 MB
 - **TLS support** — serve HTTPS directly without a reverse proxy
+- **HTTP Basic Auth** — optional password protection for the status page
 
 ---
 

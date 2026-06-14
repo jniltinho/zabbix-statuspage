@@ -10,6 +10,11 @@ tls      = false       # enable HTTPS
 tls_cert = ""          # path to TLS certificate (required when tls = true)
 tls_key  = ""          # path to TLS private key  (required when tls = true)
 
+[server.basic_auth]
+enabled  = false  # set to true to password-protect the status page
+username = ""     # required when enabled = true
+password = ""     # required when enabled = true
+
 # ─── Zabbix API ───────────────────────────────────────────────────────────────
 
 [zabbix]
