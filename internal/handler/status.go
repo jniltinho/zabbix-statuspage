@@ -15,15 +15,16 @@ import (
 const uptimeSlots = 90
 
 type HostData struct {
-	ZabbixHost  string
-	DisplayHost string
-	Label       string
-	Description string
-	HasProblem  bool
-	StatusLabel string
-	UptimeBars  []bool
-	UptimePct   float64
-	Triggers    []zabbix.Trigger
+	ZabbixHost    string
+	DisplayHost   string
+	Label         string
+	Description   string
+	HasProblem    bool
+	StatusLabel   string
+	SeverityLabel string
+	UptimeBars    []bool
+	UptimePct     float64
+	Triggers      []zabbix.Trigger
 }
 
 type HistoryItem struct {
@@ -181,6 +182,45 @@ func deriveStatusLabel(triggers []zabbix.Trigger) string {
 	return label
 }
 
+func priorityLabel(p int) string {
+	switch p {
+	case 0:
+		return "Not classified"
+	case 1:
+		return "Information"
+	case 2:
+		return "Warning"
+	case 3:
+		return "Average"
+	case 4:
+		return "High"
+	case 5:
+		return "Disaster"
+	default:
+		return ""
+	}
+}
+
+func highestActiveSeverity(triggers []zabbix.Trigger) string {
+	highest := -1
+	for _, t := range triggers {
+		if t.Value != "1" {
+			continue
+		}
+		p, err := strconv.Atoi(t.Priority)
+		if err != nil {
+			continue
+		}
+		if p > highest {
+			highest = p
+		}
+	}
+	if highest < 0 {
+		return ""
+	}
+	return priorityLabel(highest)
+}
+
 func buildHostData(
 	host string, label string, description string,
 	triggers []zabbix.Trigger,
@@ -197,14 +237,15 @@ func buildHostData(
 	}
 	bars, pct := computeUptimeBars(eventsByHost[host], resolvedClocks, now)
 	return HostData{
-		ZabbixHost:  host,
-		Label:       label,
-		Description: description,
-		HasProblem:  hasProblem,
-		StatusLabel: deriveStatusLabel(triggers),
-		UptimeBars:  bars,
-		UptimePct:   pct,
-		Triggers:    triggers,
+		ZabbixHost:    host,
+		Label:         label,
+		Description:   description,
+		HasProblem:    hasProblem,
+		StatusLabel:   deriveStatusLabel(triggers),
+		SeverityLabel: highestActiveSeverity(triggers),
+		UptimeBars:    bars,
+		UptimePct:     pct,
+		Triggers:      triggers,
 	}
 }
 

@@ -16,12 +16,12 @@
     {{/* Uptime % badge */}}
     <span class="text-[10px] font-mono text-gray-500 shrink-0 w-24">↗ 24h {{printf "%.2f" .UptimePct}}%</span>
 
-    {{/* Status badge */}}
-    <span class="shrink-0 w-20 text-center text-[10px] font-semibold px-2 py-0.5 border border-black
+    {{/* Status badge with severity inline */}}
+    <span class="shrink-0 w-36 text-center text-[10px] font-semibold px-2 py-0.5 border border-black
         {{if eq .StatusLabel "Outage"}}bg-red-500 text-white
         {{else if eq .StatusLabel "Degraded"}}bg-[#ffd500] text-black
         {{else}}bg-[#00c950] text-black{{end}}">
-        {{.StatusLabel}}
+        {{.StatusLabel}}{{if .SeverityLabel}} - {{.SeverityLabel}}{{end}}
     </span>
 
     {{/* Uptime bar */}}
