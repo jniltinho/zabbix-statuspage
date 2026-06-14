@@ -6,6 +6,7 @@
 - [Requirements](#requirements)
 - [Installation](#installation)
   - [From release binary](#from-release-binary)
+  - [As a systemd service](#as-a-systemd-service)
   - [Build from source](#build-from-source)
   - [Docker](#docker)
 - [Configuration](#configuration)
@@ -57,6 +58,37 @@ No database. No Redis. No external dependencies at runtime. All templates, CSS, 
 ```bash
 curl -fsSL https://github.com/jniltinho/zabbix-statuspage/releases/latest/download/zabbix-statuspage_linux_amd64.tar.gz \
   | tar -xz -C /usr/local/bin
+```
+
+### As a systemd service
+
+Install the binary and config under `/opt/zabbix-statuspage`, then register it as a system service:
+
+```bash
+# Create the installation directory
+sudo mkdir -p /opt/zabbix-statuspage
+
+# Copy the binary and config
+sudo cp bin/zabbix-statuspage /opt/zabbix-statuspage/
+sudo cp config.toml /opt/zabbix-statuspage/
+
+# Install the service unit
+sudo cp docs/zabbix-statuspage.service /etc/systemd/system/
+
+# Enable and start
+sudo systemctl daemon-reload
+sudo systemctl enable --now zabbix-statuspage
+
+# Check status
+sudo systemctl status zabbix-statuspage
+```
+
+The service runs as `nobody:nogroup` with the working directory set to `/opt/zabbix-statuspage`, so `config.toml` is read from there by default. To use a different config path, override `ExecStart` with `--config /path/to/config.toml`.
+
+To view logs:
+
+```bash
+journalctl -u zabbix-statuspage -f
 ```
 
 ### Build from source

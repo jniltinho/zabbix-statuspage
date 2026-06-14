@@ -1,0 +1,18 @@
+[Unit]
+Description=Zabbix Statuspage
+After=network.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nogroup
+WorkingDirectory=/opt/zabbix-statuspage
+ExecStart=/opt/zabbix-statuspage/zabbix-statuspage serve
+Restart=on-failure
+RestartSec=5
+
+#StandardOutput=append:/opt/zabbix-statuspage/logs/output.log
+#StandardError=append:/opt/zabbix-statuspage/logs/output.log
+
+[Install]
+WantedBy=multi-user.target
