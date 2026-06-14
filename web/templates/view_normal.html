@@ -1,0 +1,114 @@
+{{define "view-normal"}}
+
+{{if .Data.Upcoming}}
+<div class="border-2 border-black bg-[#ffd500] p-3 mb-4 neo-shadow-lg">
+    <div class="flex flex-col sm:flex-row gap-4">
+        <div class="sm:w-48 shrink-0">
+            <h2 class="font-bold text-sm">Planned service</h2>
+            <p class="text-xs text-gray-700 mt-1">Things we know about in advance that can cause problems.</p>
+        </div>
+        <div class="flex-1">
+            {{range .Data.Upcoming}}
+            <div class="mb-2 last:mb-0">
+                <p class="font-semibold text-xs">{{.Name}}</p>
+                <p class="text-[10px] font-mono mt-0.5">
+                    <i data-lucide="clock" class="inline w-3 h-3"></i>
+                    <time datetime="{{.SinceISO}}">{{.SinceISO}}</time> &ndash; <time datetime="{{.TillISO}}">{{.TillISO}}</time>
+                </p>
+                {{if .Description}}<p class="text-xs text-gray-700 mt-0.5">{{.Description}}</p>{{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+<hr class="border-black mb-4">
+{{end}}
+
+<!-- Segments -->
+{{range $i, $seg := .Data.Segments}}
+<div class="flex flex-col sm:flex-row gap-2 mb-6">
+    <div class="sm:w-24 shrink-0">
+        <h2 class="font-bold text-sm">{{$seg.Name}}</h2>
+        {{if $seg.Description}}<p class="text-xs text-gray-500 mt-1">{{$seg.Description}}</p>{{end}}
+    </div>
+    {{if eq $i 0}}
+    <div class="flex-1 flex flex-col gap-1.5 max-h-72 overflow-y-auto pr-1">
+    {{else}}
+    <div class="flex-1 flex flex-col gap-1.5">
+    {{end}}
+        {{range $seg.Services}}{{template "card" .}}{{end}}
+    </div>
+</div>
+{{end}}
+
+<hr class="border-black mb-4">
+
+<!-- Current problems -->
+<div class="flex flex-col sm:flex-row gap-2 mb-4">
+    <div class="sm:w-24 shrink-0">
+        <h3 class="font-bold text-xs">Current problems</h3>
+        <p class="text-[10px] text-gray-400 mt-0.5 font-light">Active problems right now.</p>
+    </div>
+    <div class="flex-1 max-h-32 overflow-y-auto pr-1">
+        {{if .Data.CurrentProblems}}
+            {{range .Data.CurrentProblems}}
+            <div class="border-b border-gray-200 py-0.5 last:border-b-0 flex items-center gap-2">
+                <div class="flex-1 min-w-0">
+                    <span class="text-[9px] font-mono text-gray-600"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time></span>
+                    <span class="text-[10px] text-gray-900 font-medium ml-1">{{.Name}}</span>
+                    <span class="text-[9px] text-gray-600 ml-1">{{.HostLabel}}</span>
+                </div>
+                <span class="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-yellow-800 bg-yellow-100 px-1.5 py-0.5">Problem</span>
+            </div>
+            {{end}}
+        {{else}}
+            <p class="text-[10px] text-gray-400 font-light">No active problems.</p>
+        {{end}}
+    </div>
+</div>
+
+<!-- Past problems -->
+<div class="flex flex-col sm:flex-row gap-2 mb-6">
+    <div class="sm:w-24 shrink-0">
+        <h3 class="font-bold text-xs">Past problems</h3>
+        <p class="text-[10px] text-gray-400 mt-0.5 font-light">Problems reported the last couple of days.</p>
+    </div>
+    <div class="flex-1 max-h-36 overflow-y-auto pr-1">
+        {{if .Data.History}}
+            {{range .Data.History}}
+            <div class="border-b border-gray-200 py-0.5 last:border-b-0 flex items-center gap-2">
+                <div class="flex-1 min-w-0">
+                    <span class="text-[9px] font-mono text-gray-600"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time></span>
+                    <span class="text-[10px] text-gray-900 font-medium ml-1">{{.Name}}</span>
+                    <span class="text-[9px] text-gray-600 ml-1">{{.HostLabel}} &mdash; <time datetime="{{.ResolvedISO}}">{{.ResolvedISO}}</time></span>
+                </div>
+                <span class="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-green-800 bg-green-100 px-1.5 py-0.5">Resolved</span>
+            </div>
+            {{end}}
+        {{else}}
+            <p class="text-[10px] text-gray-400 font-light">Nothing to report.</p>
+        {{end}}
+    </div>
+</div>
+
+{{if .Data.ExternalStatuspages}}
+<hr class="border-black mb-4">
+<div class="flex flex-col sm:flex-row gap-4 mb-6">
+    <div class="sm:w-48 shrink-0">
+        <h3 class="font-bold text-sm">External statuspages</h3>
+        <p class="text-xs text-gray-500 mt-1">More in-depth information about current status and past incidents.</p>
+    </div>
+    <div class="flex-1 flex flex-wrap gap-2">
+        {{range .Data.ExternalStatuspages}}
+        <div>
+            <a target="_blank" href="{{.URL}}" class="inline-block border border-black px-3 py-1 text-xs font-semibold hover:bg-black hover:text-white neo-shadow-sm">
+                {{.Name}}
+            </a>
+            {{if .Description}}<p class="text-[10px] text-gray-400 mt-0.5">{{.Description}}</p>{{end}}
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{end}}

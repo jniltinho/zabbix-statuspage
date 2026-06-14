@@ -56,6 +56,7 @@ type PageData struct {
 	Micro               bool
 	Segments            []SegmentData
 	Hosts               []HostData
+	CurrentProblems     []HistoryItem
 	History             []HistoryItem
 	Upcoming            []MaintenanceItem
 	ExternalStatuspages []config.ExternalLink
@@ -340,6 +341,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 		sortServices(sd.Services)
 		flatHosts = sd.Services
 
+		currentProblems := buildCurrentProblems(events, hostLabels)
 		historyItems := buildHistory(events, resolvedClocks, hostLabels)
 		upcomingItems := buildMaintenance(maintenances)
 
@@ -349,6 +351,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 				Micro:               micro,
 				Segments:            []SegmentData{sd},
 				Hosts:               flatHosts,
+				CurrentProblems:     currentProblems,
 				History:             historyItems,
 				Upcoming:            upcomingItems,
 				ExternalStatuspages: h.cfg.ExternalStatuspages,
@@ -430,6 +433,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 		segments = append(segments, sd)
 	}
 
+	currentProblems := buildCurrentProblems(events, hostLabels)
 	historyItems := buildHistory(events, resolvedClocks, hostLabels)
 	upcomingItems := buildMaintenance(maintenances)
 
@@ -439,6 +443,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			Micro:               micro,
 			Segments:            segments,
 			Hosts:               flatHosts,
+			CurrentProblems:     currentProblems,
 			History:             historyItems,
 			Upcoming:            upcomingItems,
 			ExternalStatuspages: h.cfg.ExternalStatuspages,
@@ -470,10 +475,35 @@ func eventsByHostMap(events []zabbix.Event) map[string][]zabbix.Event {
 	return m
 }
 
+func buildCurrentProblems(events []zabbix.Event, hostLabels map[string]string) []HistoryItem {
+	var items []HistoryItem
+	for _, e := range events {
+		if e.Value != "1" || (e.REventID != "0" && e.REventID != "") {
+			continue
+		}
+		hostLabel := ""
+		if len(e.Hosts) > 0 {
+			if lbl, ok := hostLabels[e.Hosts[0].Host]; ok {
+				hostLabel = lbl
+			} else {
+				hostLabel = e.Hosts[0].Host
+			}
+		}
+		items = append(items, HistoryItem{
+			ClockUnix: e.Clock,
+			ClockISO:  unixToISO(e.Clock),
+			Name:      e.Name,
+			HostLabel: hostLabel,
+			Resolved:  false,
+		})
+	}
+	return items
+}
+
 func buildHistory(events []zabbix.Event, resolvedClocks map[string]string, hostLabels map[string]string) []HistoryItem {
 	var items []HistoryItem
 	for _, e := range events {
-		if e.REventID == "0" {
+		if e.Value != "1" || e.REventID == "0" || e.REventID == "" {
 			continue
 		}
 		hostLabel := ""
