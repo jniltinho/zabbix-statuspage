@@ -335,10 +335,10 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			}
 			summary.Hosts++
 			sd.Services = append(sd.Services, hd)
-			flatHosts = append(flatHosts, hd)
 		}
 
 		sortServices(sd.Services)
+		flatHosts = sd.Services
 
 		historyItems := buildHistory(events, resolvedClocks, hostLabels)
 		upcomingItems := buildMaintenance(maintenances)
@@ -424,9 +424,9 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			}
 			summary.Hosts++
 			sd.Services = append(sd.Services, hd)
-			flatHosts = append(flatHosts, hd)
 		}
 		sortServices(sd.Services)
+		flatHosts = append(flatHosts, sd.Services...)
 		segments = append(segments, sd)
 	}
 

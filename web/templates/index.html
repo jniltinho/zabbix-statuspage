@@ -51,15 +51,15 @@
 
     {{if .Data.Compact}}
     <!-- Compact view -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2 mb-4 max-h-96 overflow-y-auto border border-black p-1">
         {{range .Data.Hosts}}
-        <div>{{template "card" .}}</div>
+        <div>{{template "card-compact" .}}</div>
         {{end}}
     </div>
     {{if .Data.History}}
-    <div class="flex flex-wrap gap-1 mt-2">
+    <div class="flex flex-wrap gap-1 mt-2 max-h-48 overflow-y-auto border border-black p-1">
         {{range .Data.History}}{{if .Resolved}}
-        <span class="border border-black text-[10px] px-1.5 py-0.5 font-mono bg-green-50 text-green-800">
+        <span class="border border-black text-[10px] px-1.5 py-0.5 font-mono bg-[#ffd500] text-black">
             <strong><time datetime="{{.ClockISO}}">{{.ClockISO}}</time></strong> {{.Name}}
         </span>
         {{end}}{{end}}
@@ -72,11 +72,13 @@
         <div class="border-b-2 border-black px-3 py-1.5 bg-gray-50">
             <span class="text-xs font-bold uppercase tracking-wide">Services</span>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 max-h-96 overflow-y-auto">
             {{range .Data.Hosts}}
             <div class="flex items-center justify-between border-b border-black px-3 py-1.5 last:border-b-0">
                 <span class="text-xs">{{.Label}}</span>
-                {{if .HasProblem}}
+                {{if eq .StatusLabel "Outage"}}
+                    <i data-lucide="x-circle" class="w-4 h-4 text-red-500 ml-2"></i>
+                {{else if eq .StatusLabel "Degraded"}}
                     <i data-lucide="alert-circle" class="w-4 h-4 text-yellow-600 ml-2"></i>
                 {{else}}
                     <i data-lucide="check-circle" class="w-4 h-4 text-green-600 ml-2"></i>
@@ -90,12 +92,14 @@
         <div class="border-b-2 border-black px-3 py-1.5 bg-gray-50">
             <span class="text-xs font-bold uppercase tracking-wide">History</span>
         </div>
-        {{range .Data.History}}{{if .Resolved}}
-        <div class="border-b border-black px-3 py-1.5 last:border-b-0">
-            <p class="text-[10px] text-gray-500 font-mono"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time></p>
-            <p class="text-xs">{{.Name}}</p>
+        <div class="max-h-64 overflow-y-auto">
+            {{range .Data.History}}{{if .Resolved}}
+            <div class="border-b border-black px-3 py-1.5 last:border-b-0">
+                <p class="text-[10px] text-gray-500 font-mono"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time>{{if .HostLabel}} &mdash; <span class="font-semibold text-gray-700">{{.HostLabel}}</span>{{end}}</p>
+                <p class="text-xs">{{.Name}}</p>
+            </div>
+            {{end}}{{end}}
         </div>
-        {{end}}{{end}}
     </div>
     {{end}}
 

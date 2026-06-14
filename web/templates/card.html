@@ -1,3 +1,32 @@
+{{define "card-compact"}}
+<div class="flex items-center gap-3 border border-black bg-white px-3 py-2 neo-shadow-sm">
+
+    {{if eq .StatusLabel "Outage"}}
+        <i data-lucide="x-circle" class="shrink-0 w-4 h-4 text-red-500"></i>
+    {{else if eq .StatusLabel "Degraded"}}
+        <i data-lucide="alert-circle" class="shrink-0 w-4 h-4 text-yellow-600"></i>
+    {{else}}
+        <i data-lucide="check-circle" class="shrink-0 w-4 h-4 text-green-600"></i>
+    {{end}}
+
+    <span class="font-bold text-xs flex-1 min-w-0 truncate">{{.Label}}</span>
+
+    <span class="shrink-0 text-center text-[10px] font-semibold px-2 py-0.5 border border-black whitespace-nowrap
+        {{if eq .StatusLabel "Outage"}}bg-red-500 text-white
+        {{else if eq .StatusLabel "Degraded"}}bg-[#ffd500] text-black
+        {{else}}bg-[#00c950] text-black{{end}}">
+        {{.StatusLabel}}{{if .SeverityLabel}} - {{.SeverityLabel}}{{end}}
+    </span>
+
+    <div class="flex gap-px w-14 shrink-0 h-5 items-stretch overflow-hidden">
+        {{range .UptimeBars}}
+        <div class="flex-1 {{if .}}bg-green-500{{else}}bg-red-500{{end}}"></div>
+        {{end}}
+    </div>
+
+</div>
+{{end}}
+
 {{define "card"}}
 <div class="flex items-center gap-3 border border-black bg-white px-3 py-2 neo-shadow-sm">
 
