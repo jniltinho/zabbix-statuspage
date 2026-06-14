@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -149,6 +150,23 @@ func computeUptimeBars(hostEvents []zabbix.Event, resolvedClocks map[string]stri
 	return bars, float64(okCount) / float64(uptimeSlots) * 100
 }
 
+func statusPriority(label string) int {
+	switch label {
+	case "Outage":
+		return 0
+	case "Degraded":
+		return 1
+	default:
+		return 2
+	}
+}
+
+func sortServices(services []HostData) {
+	sort.SliceStable(services, func(i, j int) bool {
+		return statusPriority(services[i].StatusLabel) < statusPriority(services[j].StatusLabel)
+	})
+}
+
 func deriveStatusLabel(triggers []zabbix.Trigger) string {
 	label := "Operational"
 	for _, t := range triggers {
@@ -279,6 +297,8 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			flatHosts = append(flatHosts, hd)
 		}
 
+		sortServices(sd.Services)
+
 		historyItems := buildHistory(events, resolvedClocks, hostLabels)
 		upcomingItems := buildMaintenance(maintenances)
 
@@ -365,6 +385,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			sd.Services = append(sd.Services, hd)
 			flatHosts = append(flatHosts, hd)
 		}
+		sortServices(sd.Services)
 		segments = append(segments, sd)
 	}
 
