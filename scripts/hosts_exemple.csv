@@ -1,0 +1,3 @@
+hostname,ip,port,group,template,tags,interface_type,snmp_community
+srv-web01,10.0.0.10,10050,Linux servers,Linux by Zabbix agent,output:statuspage,agent,
+sw-core01,10.0.0.1,161,Switches,ICMP Ping,"output:statuspage,tipo:switch",snmp,public

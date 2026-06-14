@@ -68,6 +68,26 @@ docker compose up -d
 
 ---
 
+## Management Scripts
+
+Python scripts to manage Zabbix hosts and tags directly from the CLI:
+
+| Script                    | Description                                      |
+|---------------------------|--------------------------------------------------|
+| `add_zabbix_host.py`      | Add host(s) via CLI arguments or CSV file        |
+| `delete_zabbix_host.py`   | Remove a host by name or ID                      |
+| `list_zabbix_hosts.py`    | List all hosts in tabular format                 |
+| `export_zabbix_hosts.py`  | Export all hosts to CSV and JSON                 |
+| `import_zabbix7_hosts.py` | Import hosts from a Zabbix 3.2 JSON into 7      |
+| `add_tag_hosts.py`        | Add one or more tags to all hosts                |
+| `fetch_triggers.py`       | List all triggers with priority and status       |
+
+All scripts support `--api-token` or `--user`/`--password` for authentication.
+
+**[Full scripts documentation → scripts/README.md](scripts/README.md)**
+
+---
+
 ## Documentation
 
 Full setup, configuration reference, build instructions, and CLI docs:

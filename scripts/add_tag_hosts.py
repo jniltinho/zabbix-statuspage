@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
+"""Add one or more tags to all Zabbix hosts that do not already have them."""
 
+import argparse
 import requests
 import sys
 
-ZABBIX_URL = "http://localhost:8080/api_jsonrpc.php"
-ZABBIX_USER = "Admin"
-ZABBIX_PASS = "zabbix"
 
-TAG_NAME = "output"
-TAG_VALUE = "statuspage"
-
-
-def api_call(auth, method, params):
+def api_call(url, auth, method, params):
+    """Send a JSON-RPC request with an existing auth token and return the result."""
     payload = {
         "jsonrpc": "2.0",
         "method": method,
@@ -21,7 +17,7 @@ def api_call(auth, method, params):
     }
 
     r = requests.post(
-        ZABBIX_URL,
+        url,
         json=payload,
         headers={"Content-Type": "application/json-rpc"}
     )
@@ -34,18 +30,19 @@ def api_call(auth, method, params):
     return data["result"]
 
 
-def login():
+def login(url, user, password):
+    """Authenticate against the Zabbix API and return the session token."""
     payload = {
         "jsonrpc": "2.0",
         "method": "user.login",
         "params": {
-            "username": ZABBIX_USER,
-            "password": ZABBIX_PASS
+            "username": user,
+            "password": password
         },
         "id": 1
     }
 
-    r = requests.post(ZABBIX_URL, json=payload)
+    r = requests.post(url, json=payload)
     data = r.json()
 
     if "error" in data:
@@ -54,47 +51,86 @@ def login():
     return data["result"]
 
 
-auth = login()
+def parse_tags(tags_str):
+    """Parse a comma-separated 'key:value' string into a list of tag dicts."""
+    tags = []
+    for item in tags_str.split(","):
+        item = item.strip()
+        if not item:
+            continue
+        tag, _, value = item.partition(":")
+        tags.append({"tag": tag.strip(), "value": value.strip()})
+    return tags
 
-hosts = api_call(auth, "host.get", {
-    "output": ["hostid", "host"],
-    "selectTags": "extend"
-})
 
-print(f"Hosts encontrados: {len(hosts)}")
+def main():
+    parser = argparse.ArgumentParser(
+        description="Add one or more tags to all Zabbix hosts that do not already have them"
+    )
 
-for host in hosts:
+    parser.add_argument("--url", required=True, help="Zabbix URL, e.g.: http://zabbix/zabbix")
+    parser.add_argument("--user", help="Zabbix username")
+    parser.add_argument("--password", help="Zabbix password")
+    parser.add_argument("--api-token", help="Zabbix API token (alternative to --user/--password)")
+    parser.add_argument(
+        "--tags",
+        default="output:statuspage",
+        help="Tags in key:value format, separated by comma (e.g. output:statuspage,env:prod)"
+    )
 
-    hostid = host["hostid"]
-    hostname = host["host"]
+    args = parser.parse_args()
 
-    tags = host.get("tags", [])
+    if not args.api_token and not (args.user and args.password):
+        print("[ERROR] Provide --api-token or both --user and --password")
+        sys.exit(1)
 
-    exists = False
+    new_tags = parse_tags(args.tags)
 
-    for tag in tags:
-        if tag["tag"] == TAG_NAME and tag["value"] == TAG_VALUE:
-            exists = True
-            break
+    if not new_tags:
+        print("[ERROR] No valid tags provided.")
+        sys.exit(1)
 
-    if exists:
-        print(f"[SKIP] {hostname}")
-        continue
+    api_url = args.url.rstrip("/") + "/api_jsonrpc.php"
 
-    tags.append({
-        "tag": TAG_NAME,
-        "value": TAG_VALUE
+    if args.api_token:
+        auth = args.api_token
+    else:
+        auth = login(api_url, args.user, args.password)
+
+    hosts = api_call(url=api_url, auth=auth, method="host.get", params={
+        "output": ["hostid", "host"],
+        "selectTags": "extend"
     })
 
-    try:
-        api_call(auth, "host.update", {
-            "hostid": hostid,
-            "tags": tags
-        })
+    print(f"Hosts found: {len(hosts)}")
 
-        print(f"[OK] {hostname}")
+    for host in hosts:
+        hostid   = host["hostid"]
+        hostname = host["host"]
+        existing = host.get("tags", [])
 
-    except Exception as e:
-        print(f"[ERRO] {hostname}: {e}")
+        existing_set = {(t["tag"], t["value"]) for t in existing}
+        to_add = [t for t in new_tags if (t["tag"], t["value"]) not in existing_set]
 
-print("Finalizado.")
+        if not to_add:
+            print(f"[SKIP] {hostname}")
+            continue
+
+        updated_tags = existing + to_add
+
+        try:
+            api_call(url=api_url, auth=auth, method="host.update", params={
+                "hostid": hostid,
+                "tags": updated_tags
+            })
+
+            print(f"[OK] {hostname}")
+
+        except Exception as e:
+            print(f"[ERROR] {hostname}: {e}")
+
+    print("Done.")
+
+
+if __name__ == "__main__":
+    main()

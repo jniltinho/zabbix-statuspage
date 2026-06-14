@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Export all Zabbix hosts to a CSV file and a JSON file for backup or migration."""
 
 import requests
 import csv
@@ -9,14 +9,16 @@ import sys
 
 
 class ZabbixAPI:
-    def __init__(self, url, user, password):
+    """Thin wrapper around the Zabbix JSON-RPC API."""
+
+    def __init__(self, url):
+        """Initialize the API client with the Zabbix base URL."""
         self.url = url.rstrip("/") + "/api_jsonrpc.php"
-        self.user = user
-        self.password = password
         self.auth_token = None
         self.request_id = 1
 
     def call(self, method, params=None):
+        """Send a JSON-RPC request and return the result field."""
         payload = {
             "jsonrpc": "2.0",
             "method": method,
@@ -36,26 +38,32 @@ class ZabbixAPI:
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            print(f"Erro de conexão com o Zabbix: {e}")
+            print(f"Zabbix connection error: {e}")
             sys.exit(1)
 
         data = response.json()
 
         if "error" in data:
-            print(f"Erro da API Zabbix: {data['error']}")
+            print(f"Zabbix API error: {data['error']}")
             sys.exit(1)
 
         return data.get("result")
 
-    def login(self):
+    def login(self, user, password):
+        """Authenticate with username/password and store the session token."""
         self.auth_token = self.call("user.login", {
-            "user": self.user,
-            "password": self.password
+            "user": user,
+            "password": password
         })
 
-        print("Login realizado com sucesso.")
+        print("Login successful.")
+
+    def set_token(self, token):
+        """Use a pre-generated API token instead of username/password login."""
+        self.auth_token = token
 
     def get_hosts(self):
+        """Return all hosts with interfaces, groups, and templates, sorted by name."""
         return self.call("host.get", {
             "output": [
                 "hostid",
@@ -88,34 +96,37 @@ class ZabbixAPI:
 
 
 def status_text(status):
-    return "Ativo" if str(status) == "0" else "Desativado"
+    """Convert the numeric Zabbix status field to a human-readable string."""
+    return "Enabled" if str(status) == "0" else "Disabled"
 
 
 def available_text(available):
+    """Convert the numeric Zabbix availability field to a human-readable string."""
     mapping = {
-        "0": "Desconhecido",
-        "1": "Disponível",
-        "2": "Indisponível"
+        "0": "Unknown",
+        "1": "Available",
+        "2": "Unavailable"
     }
-    return mapping.get(str(available), "Desconhecido")
+    return mapping.get(str(available), "Unknown")
 
 
 def export_csv(hosts, filename):
+    """Write host data to a semicolon-delimited CSV file."""
     with open(filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile, delimiter=";")
 
         writer.writerow([
             "HostID",
             "Host",
-            "Nome Visível",
+            "Visible Name",
             "Status",
-            "Disponibilidade",
+            "Availability",
             "IP",
             "DNS",
-            "Porta",
-            "Grupos",
+            "Port",
+            "Groups",
             "Templates",
-            "Erro"
+            "Error"
         ])
 
         for host in hosts:
@@ -146,35 +157,45 @@ def export_csv(hosts, filename):
                 host.get("error", "")
             ])
 
-    print(f"Arquivo CSV gerado: {filename}")
+    print(f"CSV file generated: {filename}")
 
 
 def export_json(hosts, filename):
+    """Write the raw host list to a JSON file (used as input for import_zabbix7_hosts.py)."""
     with open(filename, "w", encoding="utf-8") as jsonfile:
         json.dump(hosts, jsonfile, indent=4, ensure_ascii=False)
 
-    print(f"Arquivo JSON gerado: {filename}")
+    print(f"JSON file generated: {filename}")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Exporta todos os hosts cadastrados no Zabbix 3.2"
+        description="Export all registered hosts from Zabbix to CSV and JSON"
     )
 
-    parser.add_argument("--url", required=True, help="URL do Zabbix, ex: http://zabbix.local/zabbix")
-    parser.add_argument("--user", required=True, help="Usuário do Zabbix")
-    parser.add_argument("--password", required=True, help="Senha do Zabbix")
-    parser.add_argument("--csv", default="zabbix_hosts.csv", help="Arquivo CSV de saída")
-    parser.add_argument("--json", default="zabbix_hosts.json", help="Arquivo JSON de saída")
+    parser.add_argument("--url", required=True, help="Zabbix URL, e.g.: http://zabbix.local/zabbix")
+    parser.add_argument("--user", help="Zabbix username")
+    parser.add_argument("--password", help="Zabbix password")
+    parser.add_argument("--api-token", help="Zabbix API token (alternative to --user/--password)")
+    parser.add_argument("--csv", default="zabbix_hosts.csv", help="Output CSV file")
+    parser.add_argument("--json", default="zabbix_hosts.json", help="Output JSON file")
 
     args = parser.parse_args()
 
-    zbx = ZabbixAPI(args.url, args.user, args.password)
-    zbx.login()
+    if not args.api_token and not (args.user and args.password):
+        print("[ERROR] Provide --api-token or both --user and --password")
+        sys.exit(1)
+
+    zbx = ZabbixAPI(args.url)
+
+    if args.api_token:
+        zbx.set_token(args.api_token)
+    else:
+        zbx.login(args.user, args.password)
 
     hosts = zbx.get_hosts()
 
-    print(f"Total de hosts encontrados: {len(hosts)}")
+    print(f"Total hosts found: {len(hosts)}")
 
     export_csv(hosts, args.csv)
     export_json(hosts, args.json)

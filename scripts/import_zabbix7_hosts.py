@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Import hosts from a Zabbix 3.2 JSON export into Zabbix 7 LTS.
+
+Reads the JSON file produced by export_zabbix_hosts.py and recreates each host
+in a Zabbix 7 instance, mapping legacy template names to their modern equivalents.
+Supports --dry-run to preview the payload without touching the destination.
+"""
 
 import argparse
 import json
@@ -7,6 +12,7 @@ import sys
 import requests
 
 
+# Maps Zabbix 3.2 template names to their Zabbix 7 equivalents.
 TEMPLATE_MAP = {
     "Template OS Linux": "Linux by Zabbix agent",
     "Template ICMP Ping": "ICMP Ping",
@@ -15,14 +21,16 @@ TEMPLATE_MAP = {
 
 
 class ZabbixAPI:
-    def __init__(self, url, user, password):
+    """Thin wrapper around the Zabbix JSON-RPC API."""
+
+    def __init__(self, url):
+        """Initialize the API client with the Zabbix base URL."""
         self.url = url.rstrip("/") + "/api_jsonrpc.php"
-        self.user = user
-        self.password = password
         self.auth = None
         self.req_id = 1
 
     def call(self, method, params=None):
+        """Send a JSON-RPC request and return the result field."""
         payload = {
             "jsonrpc": "2.0",
             "method": method,
@@ -50,13 +58,19 @@ class ZabbixAPI:
 
         return data["result"]
 
-    def login(self):
+    def login(self, user, password):
+        """Authenticate with username/password and store the session token."""
         self.auth = self.call("user.login", {
-            "username": self.user,
-            "password": self.password
+            "username": user,
+            "password": password
         })
 
+    def set_token(self, token):
+        """Use a pre-generated API token instead of username/password login."""
+        self.auth = token
+
     def get_host(self, hostname):
+        """Return host records matching the exact technical name."""
         return self.call("host.get", {
             "output": ["hostid", "host"],
             "filter": {
@@ -65,6 +79,7 @@ class ZabbixAPI:
         })
 
     def get_group(self, name):
+        """Return the host group record for the given name, or None."""
         result = self.call("hostgroup.get", {
             "output": ["groupid", "name"],
             "filter": {
@@ -74,21 +89,24 @@ class ZabbixAPI:
         return result[0] if result else None
 
     def create_group(self, name):
+        """Create a new host group and return its ID."""
         result = self.call("hostgroup.create", {
             "name": name
         })
         return result["groupids"][0]
 
     def get_or_create_group(self, name):
+        """Return the group ID, creating the group if it does not exist."""
         group = self.get_group(name)
 
         if group:
             return group["groupid"]
 
-        print(f"Criando grupo: {name}")
+        print(f"Creating group: {name}")
         return self.create_group(name)
 
     def get_template(self, name):
+        """Return the template ID after applying TEMPLATE_MAP, or None if not found."""
         mapped_name = TEMPLATE_MAP.get(name, name)
 
         result = self.call("template.get", {
@@ -114,10 +132,12 @@ class ZabbixAPI:
         return None
 
     def create_host(self, payload):
+        """Create a host with the given payload and return the API result."""
         return self.call("host.create", payload)
 
 
 def build_interface(iface):
+    """Convert a legacy interface dict to the Zabbix 7 interface format."""
     iface_type = int(iface.get("type", 1))
 
     new_iface = {
@@ -129,7 +149,6 @@ def build_interface(iface):
         "port": str(iface.get("port") or ("161" if iface_type == 2 else "10050"))
     }
 
-    # SNMP interface no Zabbix 7
     if iface_type == 2:
         new_iface["details"] = {
             "version": 2,
@@ -141,6 +160,7 @@ def build_interface(iface):
 
 
 def build_host_payload(zbx, old_host, default_group, snmp_community, dry_run=False):
+    """Build the host.create payload from a legacy host dict."""
     hostname = old_host.get("host")
     visible_name = old_host.get("name") or hostname
     status = int(old_host.get("status", 0))
@@ -200,7 +220,7 @@ def build_host_payload(zbx, old_host, default_group, snmp_community, dry_run=Fal
         if templateid:
             templates.append({"templateid": templateid})
         else:
-            print(f"Aviso: template não encontrado no Zabbix 7: {template_name} -> {mapped_name}")
+            print(f"Warning: template not found in Zabbix 7: {template_name} -> {mapped_name}")
 
     payload = {
         "host": hostname,
@@ -228,37 +248,45 @@ def build_host_payload(zbx, old_host, default_group, snmp_community, dry_run=Fal
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Importa hosts do Zabbix 3.2 para Zabbix 7 LTS"
+        description="Import hosts from Zabbix 3.2 to Zabbix 7 LTS"
     )
 
-    parser.add_argument("--url", required=True)
-    parser.add_argument("--user", required=True)
-    parser.add_argument("--password", required=True)
-    parser.add_argument("--file", default="zabbix_hosts.json")
-    parser.add_argument("--default-group", default="Migrados/Zabbix-3.2")
-    parser.add_argument("--snmp-community", default="public")
-    parser.add_argument("--skip-existing", action="store_true")
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--url", required=True, help="Zabbix URL, e.g.: http://zabbix/zabbix")
+    parser.add_argument("--user", help="Zabbix username")
+    parser.add_argument("--password", help="Zabbix password")
+    parser.add_argument("--api-token", help="Zabbix API token (alternative to --user/--password)")
+    parser.add_argument("--file", default="zabbix_hosts.json", help="JSON file with exported hosts")
+    parser.add_argument("--default-group", default="Migrated/Zabbix-3.2", help="Fallback group for hosts without a group")
+    parser.add_argument("--snmp-community", default="public", help="SNMP community string")
+    parser.add_argument("--skip-existing", action="store_true", help="Skip hosts that already exist")
+    parser.add_argument("--dry-run", action="store_true", help="Simulate import without creating anything")
 
     args = parser.parse_args()
+
+    if not args.dry_run and not args.api_token and not (args.user and args.password):
+        print("[ERROR] Provide --api-token or both --user and --password")
+        sys.exit(1)
 
     try:
         with open(args.file, "r", encoding="utf-8") as f:
             hosts = json.load(f)
     except Exception as e:
-        print(f"Erro lendo arquivo JSON: {e}")
+        print(f"Error reading JSON file: {e}")
         sys.exit(1)
 
-    zbx = ZabbixAPI(args.url, args.user, args.password)
+    zbx = ZabbixAPI(args.url)
 
     if not args.dry_run:
-        zbx.login()
+        if args.api_token:
+            zbx.set_token(args.api_token)
+        else:
+            zbx.login(args.user, args.password)
 
     created = 0
     skipped = 0
     errors = 0
 
-    print(f"Total de hosts no arquivo: {len(hosts)}")
+    print(f"Total hosts in file: {len(hosts)}")
 
     for old_host in hosts:
         hostname = old_host.get("host")
@@ -272,11 +300,11 @@ def main():
 
                 if exists:
                     if args.skip_existing:
-                        print(f"[SKIP] Host já existe: {hostname}")
+                        print(f"[SKIP] Host already exists: {hostname}")
                         skipped += 1
                         continue
 
-                    print(f"[ERRO] Host já existe: {hostname}")
+                    print(f"[ERROR] Host already exists: {hostname}")
                     errors += 1
                     continue
 
@@ -294,18 +322,18 @@ def main():
 
             result = zbx.create_host(payload)
 
-            print(f"[OK] Host criado: {hostname} ID={result['hostids'][0]}")
+            print(f"[OK] Host created: {hostname} ID={result['hostids'][0]}")
             created += 1
 
         except Exception as e:
-            print(f"[ERRO] {hostname}: {e}")
+            print(f"[ERROR] {hostname}: {e}")
             errors += 1
 
     print("")
-    print("Resumo:")
-    print(f"  Criados: {created}")
-    print(f"  Ignorados: {skipped}")
-    print(f"  Erros: {errors}")
+    print("Summary:")
+    print(f"  Created: {created}")
+    print(f"  Skipped: {skipped}")
+    print(f"  Errors:  {errors}")
 
 
 if __name__ == "__main__":

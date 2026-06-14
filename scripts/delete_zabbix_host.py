@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""Delete a specific host from Zabbix 7 by technical name or host ID."""
 
 import argparse
 import requests
@@ -7,14 +7,16 @@ import sys
 
 
 class ZabbixAPI:
-    def __init__(self, url, user, password):
+    """Thin wrapper around the Zabbix JSON-RPC API."""
+
+    def __init__(self, url):
+        """Initialize the API client with the Zabbix base URL."""
         self.url = url.rstrip("/") + "/api_jsonrpc.php"
-        self.user = user
-        self.password = password
         self.auth = None
         self.req_id = 1
 
     def call(self, method, params=None):
+        """Send a JSON-RPC request and return the result field."""
         payload = {
             "jsonrpc": "2.0",
             "method": method,
@@ -37,7 +39,7 @@ class ZabbixAPI:
             r.raise_for_status()
             data = r.json()
         except Exception as e:
-            print(f"[ERRO] Falha HTTP/API: {e}")
+            print(f"[ERROR] HTTP/API failure: {e}")
             sys.exit(1)
 
         if "error" in data:
@@ -45,13 +47,19 @@ class ZabbixAPI:
 
         return data["result"]
 
-    def login(self):
+    def login(self, user, password):
+        """Authenticate with username/password and store the session token."""
         self.auth = self.call("user.login", {
-            "username": self.user,
-            "password": self.password
+            "username": user,
+            "password": password
         })
 
+    def set_token(self, token):
+        """Use a pre-generated API token instead of username/password login."""
+        self.auth = token
+
     def find_host_by_name(self, hostname):
+        """Return host records matching the exact technical name."""
         return self.call("host.get", {
             "output": ["hostid", "host", "name", "status"],
             "filter": {
@@ -60,36 +68,47 @@ class ZabbixAPI:
         })
 
     def find_host_by_id(self, hostid):
+        """Return host records matching the given host ID."""
         return self.call("host.get", {
             "output": ["hostid", "host", "name", "status"],
             "hostids": [hostid]
         })
 
     def delete_host(self, hostid):
+        """Permanently delete the host with the given ID."""
         return self.call("host.delete", [hostid])
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Deleta um host específico no Zabbix 7"
+        description="Delete a specific host from Zabbix 7"
     )
 
-    parser.add_argument("--url", required=True, help="URL do Zabbix, ex: http://zabbix/zabbix")
-    parser.add_argument("--user", required=True, help="Usuário do Zabbix")
-    parser.add_argument("--password", required=True, help="Senha do Zabbix")
+    parser.add_argument("--url", required=True, help="Zabbix URL, e.g.: http://zabbix/zabbix")
+    parser.add_argument("--user", help="Zabbix username")
+    parser.add_argument("--password", help="Zabbix password")
+    parser.add_argument("--api-token", help="Zabbix API token (alternative to --user/--password)")
 
-    parser.add_argument("--host", help="Nome técnico do host")
-    parser.add_argument("--hostid", help="ID do host")
-    parser.add_argument("--yes", action="store_true", help="Confirma exclusão sem perguntar")
+    parser.add_argument("--host", help="Technical hostname")
+    parser.add_argument("--hostid", help="Host ID")
+    parser.add_argument("--yes", action="store_true", help="Skip confirmation prompt")
 
     args = parser.parse_args()
 
-    if not args.host and not args.hostid:
-        print("Use --host ou --hostid")
+    if not args.api_token and not (args.user and args.password):
+        print("[ERROR] Provide --api-token or both --user and --password")
         sys.exit(1)
 
-    zbx = ZabbixAPI(args.url, args.user, args.password)
-    zbx.login()
+    if not args.host and not args.hostid:
+        print("[ERROR] Provide --host or --hostid")
+        sys.exit(1)
+
+    zbx = ZabbixAPI(args.url)
+
+    if args.api_token:
+        zbx.set_token(args.api_token)
+    else:
+        zbx.login(args.user, args.password)
 
     if args.hostid:
         hosts = zbx.find_host_by_id(args.hostid)
@@ -97,29 +116,29 @@ def main():
         hosts = zbx.find_host_by_name(args.host)
 
     if not hosts:
-        print("[ERRO] Host não encontrado.")
+        print("[ERROR] Host not found.")
         sys.exit(1)
 
     host = hosts[0]
 
-    print("Host encontrado:")
+    print("Host found:")
     print(f"  ID:     {host['hostid']}")
     print(f"  Host:   {host['host']}")
-    print(f"  Nome:   {host['name']}")
-    print(f"  Status: {'Ativo' if str(host['status']) == '0' else 'Desativado'}")
+    print(f"  Name:   {host['name']}")
+    print(f"  Status: {'Enabled' if str(host['status']) == '0' else 'Disabled'}")
     print("")
 
     if not args.yes:
-        confirm = input("Digite DELETE para confirmar: ")
+        confirm = input("Type DELETE to confirm: ")
 
         if confirm != "DELETE":
-            print("Cancelado.")
+            print("Cancelled.")
             sys.exit(0)
 
     result = zbx.delete_host(host["hostid"])
 
-    print(f"[OK] Host deletado com sucesso: {host['host']}")
-    print(f"ID removido: {result['hostids'][0]}")
+    print(f"[OK] Host successfully deleted: {host['host']}")
+    print(f"Removed ID: {result['hostids'][0]}")
 
 
 if __name__ == "__main__":
