@@ -46,10 +46,10 @@
 <!-- Current problems -->
 <div class="flex flex-col sm:flex-row gap-2 mb-4">
     <div class="sm:w-24 shrink-0">
-        <h3 class="font-bold text-xs">Current problems</h3>
+        <h3 class="font-bold text-[10px]">Current problems</h3>
         <p class="text-[10px] text-gray-400 mt-0.5 font-light">Active problems right now.</p>
     </div>
-    <div class="flex-1 max-h-32 overflow-y-auto pr-1">
+    <div class="flex-1 max-h-48 overflow-y-auto pr-1">
         {{if .Data.CurrentProblems}}
             {{range .Data.CurrentProblems}}
             <div class="border-b border-gray-200 py-0.5 last:border-b-0 flex items-center gap-2">
@@ -70,10 +70,10 @@
 <!-- Past problems -->
 <div class="flex flex-col sm:flex-row gap-2 mb-6">
     <div class="sm:w-24 shrink-0">
-        <h3 class="font-bold text-xs">Past problems</h3>
+        <h3 class="font-bold text-[10px]">Past problems</h3>
         <p class="text-[10px] text-gray-400 mt-0.5 font-light">Problems reported the last couple of days.</p>
     </div>
-    <div class="flex-1 max-h-36 overflow-y-auto pr-1">
+    <div class="flex-1 max-h-56 overflow-y-auto pr-1">
         {{if .Data.History}}
             {{range .Data.History}}
             <div class="border-b border-gray-200 py-0.5 last:border-b-0 flex items-center gap-2">
