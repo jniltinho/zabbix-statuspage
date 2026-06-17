@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Host Status</title>
+    {{if not .Debug}}<meta http-equiv="refresh" content="60">{{end}}
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <style>
+        #host-table tbody tr:nth-child(odd)  { background-color: #ffffff; }
+        #host-table tbody tr:nth-child(even) { background-color: #f3f4f6; }
+        #host-table tbody tr[data-status="outage"]:nth-child(odd)    { background-color: #fef2f2; }
+        #host-table tbody tr[data-status="outage"]:nth-child(even)   { background-color: #fde8e8; }
+        #host-table tbody tr[data-status="degraded"]:nth-child(odd)  { background-color: #fefce8; }
+        #host-table tbody tr[data-status="degraded"]:nth-child(even) { background-color: #fef9c3; }
+    </style>
+</head>
+<body class="bg-white font-sans text-sm text-gray-900">
+<div class="max-w-7xl mx-auto px-4 py-5">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+        <div>
+            <h1 class="text-xl font-bold tracking-tight">Host Status</h1>
+            <p class="text-xs text-gray-400 mt-0.5">
+                Last Updated: <time datetime="{{.CurrentDateISO}}" data-time="true">{{.CurrentDateISO}}</time>, reloads every minute.
+            </p>
+            <p class="text-xs mt-1.5"><a href="/" class="underline hover:text-black text-gray-500">← Back to Status Page</a></p>
+        </div>
+        {{if .Summary.Problem}}
+        <div class="border border-black bg-[#ffd500] px-3 py-2 flex items-center gap-4 neo-shadow-sm sm:min-w-64">
+            <div class="flex-1">
+                <p class="font-semibold text-xs">Some hosts report problems.</p>
+                <div class="flex flex-wrap gap-1 mt-1">
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Problem: {{.Summary.Problem}}</span>
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">OK: {{.Summary.OK}}</span>
+                </div>
+            </div>
+            <i data-lucide="alert-circle" class="shrink-0 w-7 h-7"></i>
+        </div>
+        {{else}}
+        <div class="border border-black bg-[#00c950] px-3 py-2 flex items-center gap-4 neo-shadow-sm sm:min-w-64">
+            <div class="flex-1">
+                <p class="font-semibold text-xs">All hosts are operational.</p>
+                <div class="flex flex-wrap gap-1 mt-1">
+                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
+                </div>
+            </div>
+            <i data-lucide="check-circle" class="shrink-0 w-7 h-7"></i>
+        </div>
+        {{end}}
+    </div>
+
+    <hr class="border-gray-300 border-t mb-4">
+
+    <!-- Table -->
+    <div class="border border-black overflow-auto" style="max-height: calc(100vh - 390px);">
+        <table id="host-table" class="w-full table-fixed border-collapse text-[10px]">
+            <colgroup>
+                <col style="width:280px">
+                <col style="width:116px">
+                <col style="width:132px">
+                <col>
+            </colgroup>
+            <thead class="sticky top-0 z-10">
+                <tr class="bg-black text-white text-left">
+                    <th class="border border-black px-2 py-1.5 font-bold">Host</th>
+                    <th class="border border-black px-2 py-1.5 font-bold text-center">Status</th>
+                    <th class="border border-black px-2 py-1.5 font-bold">Last Event</th>
+                    <th class="border border-black px-2 py-1.5 font-bold">Status Information</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Data.Hosts}}
+                <tr {{if eq .StatusLabel "Outage"}}data-status="outage"{{else if eq .StatusLabel "Degraded"}}data-status="degraded"{{end}}>
+                    <td class="border border-black px-2 py-0.5 font-semibold truncate">
+                        {{if and $.ZabbixBaseURL .HostID}}
+                        <a href="{{$.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1" target="_blank" class="hover:text-blue-700 hover:underline">{{.Label}}</a>
+                        {{else}}{{.Label}}{{end}}
+                    </td>
+                    <td class="border border-black px-2 py-0.5 text-center">
+                        {{if eq .StatusLabel "Outage"}}
+                        <span class="block w-full text-center bg-red-500 text-white font-bold px-2 py-0.5 uppercase tracking-wide">CRITICAL</span>
+                        {{else if eq .StatusLabel "Degraded"}}
+                        <span class="block w-full text-center bg-[#ffd500] text-gray-900 font-bold px-2 py-0.5 uppercase tracking-wide">WARNING</span>
+                        {{else}}
+                        <span class="block w-full text-center bg-[#00c950] text-gray-900 font-bold px-2 py-0.5 uppercase tracking-wide">Operational</span>
+                        {{end}}
+                    </td>
+                    <td class="border border-black px-2 py-0.5 font-mono text-gray-500 whitespace-nowrap overflow-hidden">
+                        {{if .LastEventISO}}<time datetime="{{.LastEventISO}}">{{.LastEventISO}}</time>{{else}}&mdash;{{end}}
+                    </td>
+                    <td class="border border-black px-2 py-0.5 text-gray-700">
+                        {{if .ActiveTriggers}}
+                        {{range .ActiveTriggers}}
+                        <div>{{if .LastEvent.Name}}{{.LastEvent.Name}}{{else}}{{.Description}}{{end}}</div>
+                        {{end}}
+                        {{else if .LastEventName}}<span class="text-gray-400">{{.LastEventName}}</span>
+                        {{else}}&mdash;{{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="text-[10px] text-gray-400 mt-2 font-mono">Results 1 &ndash; {{.Summary.Hosts}} of {{.Summary.Hosts}} Matching Hosts</p>
+
+    <!-- Footer -->
+    <hr class="border-gray-200 mt-4 mb-3">
+    <footer class="flex justify-between items-center text-[10px] text-gray-400">
+        <span class="font-mono">zabbix-statuspage {{.Version}}</span>
+        <a href="/" class="underline hover:text-black">← Back to Status Page</a>
+    </footer>
+
+</div>
+<script src="/static/js/lucide.min.js"></script>
+<script>
+    lucide.createIcons();
+    document.querySelectorAll('time').forEach(function($e) {
+        var date = new Date($e.dateTime);
+        if ($e.dataset.time === 'true') {
+            $e.innerHTML = date.toLocaleTimeString();
+        } else {
+            $e.innerHTML = date.toLocaleString();
+        }
+    });
+    {{if not .Debug}}setTimeout(function(){ location.reload(); }, 60000);{{end}}
+</script>
+</body>
+</html>

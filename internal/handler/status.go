@@ -15,16 +15,20 @@ import (
 const uptimeSlots = 90
 
 type HostData struct {
-	ZabbixHost    string
-	DisplayHost   string
-	Label         string
-	Description   string
-	HasProblem    bool
-	StatusLabel   string
-	SeverityLabel string
-	UptimeBars    []bool
-	UptimePct     float64
-	Triggers      []zabbix.Trigger
+	ZabbixHost     string
+	DisplayHost    string
+	HostID         string
+	Label          string
+	Description    string
+	HasProblem     bool
+	StatusLabel    string
+	SeverityLabel  string
+	UptimeBars     []bool
+	UptimePct      float64
+	Triggers       []zabbix.Trigger
+	ActiveTriggers []zabbix.Trigger
+	LastEventISO   string
+	LastEventName  string
 }
 
 type HistoryItem struct {
@@ -74,6 +78,7 @@ type TemplateData struct {
 	Summary        Summary
 	Debug          bool
 	Version        string
+	ZabbixBaseURL  string
 }
 
 type StatusHandler struct {
@@ -230,23 +235,43 @@ func buildHostData(
 	now time.Time,
 ) HostData {
 	hasProblem := false
+	var activeTrigs []zabbix.Trigger
+	lastClock := ""
 	for _, t := range triggers {
 		if t.Value == "1" {
 			hasProblem = true
-			break
+			activeTrigs = append(activeTrigs, t)
+			if t.LastEvent.Clock != "" && (lastClock == "" || t.LastEvent.Clock > lastClock) {
+				lastClock = t.LastEvent.Clock
+			}
+		}
+	}
+	lastEventName := ""
+	if lastClock == "" {
+		for _, t := range triggers {
+			if t.LastEvent.Clock != "" && (lastClock == "" || t.LastEvent.Clock > lastClock) {
+				lastClock = t.LastEvent.Clock
+				lastEventName = t.LastEvent.Name
+				if lastEventName == "" {
+					lastEventName = t.Description
+				}
+			}
 		}
 	}
 	bars, pct := computeUptimeBars(eventsByHost[host], resolvedClocks, now)
 	return HostData{
-		ZabbixHost:    host,
-		Label:         label,
-		Description:   description,
-		HasProblem:    hasProblem,
-		StatusLabel:   deriveStatusLabel(triggers),
-		SeverityLabel: highestActiveSeverity(triggers),
-		UptimeBars:    bars,
-		UptimePct:     pct,
-		Triggers:      triggers,
+		ZabbixHost:     host,
+		Label:          label,
+		Description:    description,
+		HasProblem:     hasProblem,
+		StatusLabel:    deriveStatusLabel(triggers),
+		SeverityLabel:  highestActiveSeverity(triggers),
+		UptimeBars:     bars,
+		UptimePct:      pct,
+		Triggers:       triggers,
+		ActiveTriggers: activeTrigs,
+		LastEventISO:   unixToISO(lastClock),
+		LastEventName:  lastEventName,
 	}
 }
 

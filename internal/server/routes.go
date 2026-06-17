@@ -26,5 +26,6 @@ func registerRoutes(e *echo.Echo, statusHandler *handler.StatusHandler, staticFS
 	}
 
 	e.GET("/", statusHandler.Handle)
+	e.GET("/status", statusHandler.HandleHostStatus)
 	e.GET("/static/*", echo.StaticDirectoryHandler(staticFS, false))
 }
