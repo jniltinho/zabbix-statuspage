@@ -311,7 +311,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 	}
 
 	now := time.Now()
-	backHistory := now.Add(-3 * 24 * time.Hour)
+	backHistory := now.Add(-7 * 24 * time.Hour)
 
 	autoDiscover := len(h.cfg.Segments) == 0
 
@@ -392,7 +392,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 		sortServices(sd.Services)
 		flatHosts = sd.Services
 
-		currentProblems := buildCurrentProblems(events, hostLabels)
+		currentProblems := buildCurrentProblemsFromTriggers(allTriggers, hostLabels)
 		historyItems := buildHistory(events, resolvedClocks, hostLabels)
 		upcomingItems := buildMaintenance(maintenances)
 
@@ -484,7 +484,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 		segments = append(segments, sd)
 	}
 
-	currentProblems := buildCurrentProblems(events, hostLabels)
+	currentProblems := buildCurrentProblemsFromTriggers(allTriggers, hostLabels)
 	historyItems := buildHistory(events, resolvedClocks, hostLabels)
 	upcomingItems := buildMaintenance(maintenances)
 
@@ -544,6 +544,35 @@ func buildCurrentProblems(events []zabbix.Event, hostLabels map[string]string) [
 			ClockUnix: e.Clock,
 			ClockISO:  unixToISO(e.Clock),
 			Name:      e.Name,
+			HostLabel: hostLabel,
+			Resolved:  false,
+		})
+	}
+	return items
+}
+
+func buildCurrentProblemsFromTriggers(triggers []zabbix.Trigger, hostLabels map[string]string) []HistoryItem {
+	var items []HistoryItem
+	for _, t := range triggers {
+		if t.Value != "1" || t.LastEvent.Clock == "" {
+			continue
+		}
+		hostLabel := ""
+		if len(t.Hosts) > 0 {
+			if lbl, ok := hostLabels[t.Hosts[0].Host]; ok {
+				hostLabel = lbl
+			} else {
+				hostLabel = t.Hosts[0].Host
+			}
+		}
+		name := t.LastEvent.Name
+		if name == "" {
+			name = t.Description
+		}
+		items = append(items, HistoryItem{
+			ClockUnix: t.LastEvent.Clock,
+			ClockISO:  unixToISO(t.LastEvent.Clock),
+			Name:      name,
 			HostLabel: hostLabel,
 			Resolved:  false,
 		})
