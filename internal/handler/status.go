@@ -190,7 +190,11 @@ func statusPriority(label string) int {
 
 func sortServices(services []HostData) {
 	sort.SliceStable(services, func(i, j int) bool {
-		return statusPriority(services[i].StatusLabel) < statusPriority(services[j].StatusLabel)
+		pi, pj := statusPriority(services[i].StatusLabel), statusPriority(services[j].StatusLabel)
+		if pi != pj {
+			return pi < pj
+		}
+		return services[i].LastEventISO > services[j].LastEventISO
 	})
 }
 
@@ -584,6 +588,9 @@ func buildCurrentProblemsFromTriggers(triggers []zabbix.Trigger, hostLabels map[
 			Resolved:  false,
 		})
 	}
+	sort.Slice(items, func(i, j int) bool {
+		return items[i].ClockUnix > items[j].ClockUnix
+	})
 	return items
 }
 
