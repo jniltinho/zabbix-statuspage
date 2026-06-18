@@ -9,13 +9,10 @@
         <i data-lucide="check-circle" class="shrink-0 w-4 h-4 text-green-600"></i>
     {{end}}
 
-    <span class="font-bold text-xs flex-1 min-w-0 truncate">{{.Label}}</span>
-
-    <span class="shrink-0 text-center text-[10px] font-semibold px-2 py-0.5 border border-black whitespace-nowrap
-        {{if eq .StatusLabel "Outage"}}bg-red-500 text-white
-        {{else if eq .StatusLabel "Degraded"}}bg-[#ffd500] text-black
-        {{else}}bg-[#00c950] text-black{{end}}">
-        {{.StatusLabel}}{{if .SeverityLabel}} - {{.SeverityLabel}}{{end}}
+    <span class="font-bold text-[11px] flex-1 min-w-0 truncate">
+        {{if and .ZabbixBaseURL .HostID}}
+        <a href="{{.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1" target="_blank" class="hover:text-blue-700">{{.Label}}</a>
+        {{else}}{{.Label}}{{end}}
     </span>
 
     <div class="flex gap-px w-14 shrink-0 h-5 items-stretch overflow-hidden">
@@ -23,6 +20,13 @@
         <div class="flex-1 {{if .}}bg-green-500{{else}}bg-red-500{{end}}"></div>
         {{end}}
     </div>
+
+    <span class="shrink-0 w-20 text-center text-[10px] font-semibold py-0.5 border border-black uppercase
+        {{if eq .StatusLabel "Outage"}}bg-red-500 text-white
+        {{else if eq .StatusLabel "Degraded"}}bg-[#ffd500] text-black
+        {{else}}bg-[#00c950] text-black{{end}}">
+        {{if eq .StatusLabel "Outage"}}Critical{{else if eq .StatusLabel "Degraded"}}{{if .SeverityLabel}}{{.SeverityLabel}}{{else}}Degraded{{end}}{{else}}{{.StatusLabel}}{{end}}
+    </span>
 
 </div>
 {{end}}
@@ -42,7 +46,7 @@
     {{/* Name */}}
     <span class="font-bold text-xs flex-1 min-w-0 truncate">
         {{if and .ZabbixBaseURL .HostID}}
-        <a href="{{.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1" target="_blank" class="hover:text-blue-700 hover:underline">{{.Label}}</a>
+        <a href="{{.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1" target="_blank" class="hover:text-blue-700">{{.Label}}</a>
         {{else}}{{.Label}}{{end}}
     </span>
 
@@ -50,11 +54,11 @@
     <span class="text-[10px] font-mono text-gray-500 shrink-0 w-24">↗ 24h {{printf "%.2f" .UptimePct}}%</span>
 
     {{/* Status badge with severity inline */}}
-    <span class="shrink-0 w-20 text-center text-[10px] font-semibold py-0.5 border border-black
+    <span class="shrink-0 w-20 text-center text-[10px] font-semibold py-0.5 border border-black uppercase
         {{if eq .StatusLabel "Outage"}}bg-red-500 text-white
         {{else if eq .StatusLabel "Degraded"}}bg-[#ffd500] text-black
         {{else}}bg-[#00c950] text-black{{end}}">
-        {{if eq .StatusLabel "Outage"}}CRITICAL{{else if eq .StatusLabel "Degraded"}}{{if .SeverityLabel}}{{.SeverityLabel}}{{else}}Degraded{{end}}{{else}}{{.StatusLabel}}{{end}}
+        {{if eq .StatusLabel "Outage"}}Critical{{else if eq .StatusLabel "Degraded"}}{{if .SeverityLabel}}{{.SeverityLabel}}{{else}}Degraded{{end}}{{else}}{{.StatusLabel}}{{end}}
     </span>
 
     {{/* Uptime bar */}}

@@ -40,6 +40,7 @@ type HistoryItem struct {
 	Name        string
 	Resolved    bool
 	HostLabel   string
+	HostID      string
 	ResolvedISO string
 }
 
@@ -418,6 +419,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			Summary:        summary,
 			Debug:          h.debug,
 			Version:        h.version,
+			ZabbixBaseURL:  zabbixBaseURL(h.cfg.Zabbix.APIURL),
 		})
 	}
 
@@ -514,6 +516,7 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 		Summary:        summary,
 		Debug:          h.debug,
 		Version:        h.version,
+		ZabbixBaseURL:  zabbixBaseURL(h.cfg.Zabbix.APIURL),
 	})
 }
 
@@ -601,7 +604,9 @@ func buildHistory(events []zabbix.Event, resolvedClocks map[string]string, hostL
 			continue
 		}
 		hostLabel := ""
+		hostID := ""
 		if len(e.Hosts) > 0 {
+			hostID = e.Hosts[0].HostID
 			if lbl, ok := hostLabels[e.Hosts[0].Host]; ok {
 				hostLabel = lbl
 			} else {
@@ -618,6 +623,7 @@ func buildHistory(events []zabbix.Event, resolvedClocks map[string]string, hostL
 			Name:        e.Name,
 			Resolved:    true,
 			HostLabel:   hostLabel,
+			HostID:      hostID,
 			ResolvedISO: resolvedISO,
 		})
 	}

@@ -1,12 +1,16 @@
 {{define "view-micro"}}
-<div class="border-2 border-black neo-shadow mb-4">
+<div class="border-2 border-black neo-shadow mb-6">
     <div class="border-b-2 border-black px-3 py-1.5 bg-gray-50">
         <span class="text-xs font-bold uppercase tracking-wide">Services</span>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 max-h-96 overflow-y-auto">
         {{range .Data.Hosts}}
         <div class="flex items-center justify-between border-b border-black px-3 py-1.5 last:border-b-0">
-            <span class="text-xs">{{.Label}}</span>
+            <span class="text-xs">
+                {{if and .ZabbixBaseURL .HostID}}
+                <a href="{{.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1" target="_blank" class="hover:text-blue-700">{{.Label}}</a>
+                {{else}}{{.Label}}{{end}}
+            </span>
             {{if eq .StatusLabel "Outage"}}
                 <i data-lucide="x-circle" class="w-4 h-4 text-red-500 ml-2"></i>
             {{else if eq .StatusLabel "Degraded"}}
@@ -19,17 +23,20 @@
     </div>
 </div>
 {{if .Data.History}}
-<div class="border-2 border-black neo-shadow">
+<div class="border-2 border-black neo-shadow mb-6">
     <div class="border-b-2 border-black px-3 py-1.5 bg-gray-50">
         <span class="text-xs font-bold uppercase tracking-wide">History</span>
     </div>
     <div class="max-h-64 overflow-y-auto">
         {{range .Data.History}}
         <div class="border-b border-black px-3 py-1.5 last:border-b-0">
-            <p class="text-[10px] text-gray-500 font-mono"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time>{{if .HostLabel}} &mdash; <span class="font-semibold text-gray-700">{{.HostLabel}}</span>{{end}}</p>
+            <p class="text-[10px] text-gray-500 font-mono"><time datetime="{{.ClockISO}}">{{.ClockISO}}</time>{{if .HostLabel}} &mdash; <span class="font-semibold text-gray-700">{{if and $.ZabbixBaseURL .HostID}}<a href="{{$.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1" target="_blank" class="hover:text-blue-700">{{.HostLabel}}</a>{{else}}{{.HostLabel}}{{end}}</span>{{end}}</p>
             <div class="flex items-center justify-between gap-2">
                 <p class="text-xs">{{.Name}}</p>
-                <span class="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-green-800 bg-green-100 px-1.5 py-0.5">Resolved</span>
+                <div class="flex items-center gap-2 shrink-0">
+                    {{if .ResolvedISO}}<span class="text-[9px] font-mono text-gray-400"><time datetime="{{.ResolvedISO}}">{{.ResolvedISO}}</time></span>{{end}}
+                    <span class="text-[9px] font-semibold uppercase tracking-wide text-green-800 bg-green-100 px-1.5 py-0.5">Resolved</span>
+                </div>
             </div>
         </div>
         {{end}}

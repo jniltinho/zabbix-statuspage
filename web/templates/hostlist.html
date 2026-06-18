@@ -24,7 +24,7 @@
                 </p>
             </div>
             {{if .Summary.Problem}}
-            <div class="border border-black bg-[#ffd500] px-3 py-2 flex items-center gap-4 neo-shadow-sm sm:min-w-64">
+            <div class="border-2 border-black bg-[#ffd500] px-3 py-2 flex items-center gap-4 neo-shadow-lg sm:min-w-64">
                 <div class="flex-1">
                     <p class="font-semibold text-xs">Some hosts report problems.</p>
                     <div class="flex flex-wrap gap-1 mt-1">
@@ -42,7 +42,7 @@
                 <i data-lucide="alert-circle" class="shrink-0 w-7 h-7"></i>
             </div>
             {{else}}
-            <div class="border border-black bg-[#00c950] px-3 py-2 flex items-center gap-4 neo-shadow-sm sm:min-w-64">
+            <div class="border-2 border-black bg-[#00c950] px-3 py-2 flex items-center gap-4 neo-shadow-lg sm:min-w-64">
                 <div class="flex-1">
                     <p class="font-semibold text-xs">All hosts are operational.</p>
                     <div class="flex flex-wrap gap-1 mt-1">
@@ -69,13 +69,13 @@
                     <col style="width:80px">
                     <col>
                 </colgroup>
-                <thead class="sticky top-0 z-10">
-                    <tr class="bg-black text-white text-left">
-                        <th class="border border-black px-2 py-1.5 font-bold">Host</th>
-                        <th class="border border-black px-2 py-1.5 font-bold text-center">Status</th>
-                        <th class="border border-black px-2 py-1.5 font-bold">Last Event</th>
-                        <th class="border border-black px-2 py-1.5 font-bold text-center">Duration</th>
-                        <th class="border border-black px-2 py-1.5 font-bold">Status Information</th>
+                <thead>
+                    <tr class="text-left">
+                        <th class="sticky top-0 z-10 bg-black text-white border border-black px-2 py-1.5 font-bold">Host</th>
+                        <th class="sticky top-0 z-10 bg-black text-white border border-black px-2 py-1.5 font-bold text-center">Status</th>
+                        <th class="sticky top-0 z-10 bg-black text-white border border-black px-2 py-1.5 font-bold">Last Event</th>
+                        <th class="sticky top-0 z-10 bg-black text-white border border-black px-2 py-1.5 font-bold text-center">Duration</th>
+                        <th class="sticky top-0 z-10 bg-black text-white border border-black px-2 py-1.5 font-bold">Status Information</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -85,7 +85,7 @@
                         <td class="border border-black px-2 py-0.5 font-semibold truncate">
                             {{if and $.ZabbixBaseURL .HostID}}
                             <a href="{{$.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1"
-                                target="_blank" class="hover:text-blue-700 hover:underline">{{.Label}}</a>
+                                target="_blank" class="hover:text-blue-700">{{.Label}}</a>
                             {{else}}{{.Label}}{{end}}
                         </td>
                         <td class="border border-black px-2 py-0.5 text-center">
