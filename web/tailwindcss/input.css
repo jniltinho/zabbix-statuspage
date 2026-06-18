@@ -32,3 +32,16 @@
 @utility neo-shadow-lg {
   box-shadow: 4px 4px 0 #000;
 }
+
+@layer components {
+  #host-table {
+    border-collapse: separate;
+    border-spacing: 0 2px;
+  }
+  #host-table tbody tr:nth-child(odd)  { background-color: #ffffff; }
+  #host-table tbody tr:nth-child(even) { background-color: #f9fafb; }
+  #host-table tbody tr[data-status="outage"]:nth-child(odd)    { background-color: #fef2f2; }
+  #host-table tbody tr[data-status="outage"]:nth-child(even)   { background-color: #fde8e8; }
+  #host-table tbody tr[data-status="degraded"]:nth-child(odd)  { background-color: #fefce8; }
+  #host-table tbody tr[data-status="degraded"]:nth-child(even) { background-color: #fef9c3; }
+}

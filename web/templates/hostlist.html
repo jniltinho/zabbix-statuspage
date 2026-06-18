@@ -8,14 +8,6 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <style>
-        #host-table tbody tr:nth-child(odd)  { background-color: #ffffff; }
-        #host-table tbody tr:nth-child(even) { background-color: #f3f4f6; }
-        #host-table tbody tr[data-status="outage"]:nth-child(odd)    { background-color: #fef2f2; }
-        #host-table tbody tr[data-status="outage"]:nth-child(even)   { background-color: #fde8e8; }
-        #host-table tbody tr[data-status="degraded"]:nth-child(odd)  { background-color: #fefce8; }
-        #host-table tbody tr[data-status="degraded"]:nth-child(even) { background-color: #fef9c3; }
-    </style>
 </head>
 <body class="bg-white font-sans text-sm text-gray-900">
 <div class="max-w-7xl mx-auto px-4 py-5">
@@ -34,9 +26,9 @@
             <div class="flex-1">
                 <p class="font-semibold text-xs">Some hosts report problems.</p>
                 <div class="flex flex-wrap gap-1 mt-1">
-                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
-                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Problem: {{.Summary.Problem}}</span>
-                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">OK: {{.Summary.OK}}</span>
+                    <span class="inline-flex items-center bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
+                    <span class="inline-flex items-center bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Problem: {{.Summary.Problem}}</span>
+                    <span class="inline-flex items-center bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">OK: {{.Summary.OK}}</span>
                 </div>
             </div>
             <i data-lucide="alert-circle" class="shrink-0 w-7 h-7"></i>
@@ -46,7 +38,7 @@
             <div class="flex-1">
                 <p class="font-semibold text-xs">All hosts are operational.</p>
                 <div class="flex flex-wrap gap-1 mt-1">
-                    <span class="bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
+                    <span class="inline-flex items-center bg-black text-white text-[10px] px-1.5 py-0.5 font-mono">Total: {{.Summary.Hosts}}</span>
                 </div>
             </div>
             <i data-lucide="check-circle" class="shrink-0 w-7 h-7"></i>
@@ -57,8 +49,9 @@
     <hr class="border-gray-300 border-t mb-4">
 
     <!-- Table -->
-    <div class="border border-black overflow-auto" style="max-height: calc(100vh - 390px);">
-        <table id="host-table" class="w-full table-fixed border-collapse text-[10px]">
+    <div class="overflow-auto" style="max-height: calc(100vh - 650px);">
+
+        <table id="host-table" class="w-full table-fixed text-[10px]">
             <colgroup>
                 <col style="width:280px">
                 <col style="width:116px">
