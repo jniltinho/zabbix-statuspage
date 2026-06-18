@@ -30,6 +30,7 @@ type HostData struct {
 	LastEventISO        string
 	LastEventName       string
 	LastProblemStartISO string
+	DowntimeDuration    string
 }
 
 type HistoryItem struct {
@@ -96,6 +97,23 @@ func New(client *zabbix.Client, cfg *config.Config, debug bool, version string) 
 		debug:        debug,
 		version:      version,
 	}
+}
+
+func formatDuration(d time.Duration) string {
+	if d < 0 {
+		d = 0
+	}
+	d = d.Round(time.Minute)
+	days := int(d.Hours()) / 24
+	hours := int(d.Hours()) % 24
+	mins := int(d.Minutes()) % 60
+	if days > 0 {
+		return fmt.Sprintf("%dd %dh %dm", days, hours, mins)
+	}
+	if hours > 0 {
+		return fmt.Sprintf("%dh %dm", hours, mins)
+	}
+	return fmt.Sprintf("%dm", mins)
 }
 
 func unixToISO(clockStr string) string {
@@ -259,20 +277,27 @@ func buildHostData(
 			}
 		}
 	}
+	downtimeDuration := ""
+	if hasProblem && lastClock != "" {
+		if unix, err := strconv.ParseInt(lastClock, 10, 64); err == nil {
+			downtimeDuration = formatDuration(now.Sub(time.Unix(unix, 0)))
+		}
+	}
 	bars, pct := computeUptimeBars(eventsByHost[host], resolvedClocks, now)
 	return HostData{
-		ZabbixHost:     host,
-		Label:          label,
-		Description:    description,
-		HasProblem:     hasProblem,
-		StatusLabel:    deriveStatusLabel(triggers),
-		SeverityLabel:  highestActiveSeverity(triggers),
-		UptimeBars:     bars,
-		UptimePct:      pct,
-		Triggers:       triggers,
-		ActiveTriggers: activeTrigs,
-		LastEventISO:   unixToISO(lastClock),
-		LastEventName:  lastEventName,
+		ZabbixHost:      host,
+		Label:           label,
+		Description:     description,
+		HasProblem:      hasProblem,
+		StatusLabel:     deriveStatusLabel(triggers),
+		SeverityLabel:   highestActiveSeverity(triggers),
+		UptimeBars:      bars,
+		UptimePct:       pct,
+		Triggers:        triggers,
+		ActiveTriggers:  activeTrigs,
+		LastEventISO:    unixToISO(lastClock),
+		LastEventName:   lastEventName,
+		DowntimeDuration: downtimeDuration,
 	}
 }
 

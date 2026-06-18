@@ -63,6 +63,7 @@
                 <col style="width:280px">
                 <col style="width:116px">
                 <col style="width:132px">
+                <col style="width:80px">
                 <col>
             </colgroup>
             <thead class="sticky top-0 z-10">
@@ -70,6 +71,7 @@
                     <th class="border border-black px-2 py-1.5 font-bold">Host</th>
                     <th class="border border-black px-2 py-1.5 font-bold text-center">Status</th>
                     <th class="border border-black px-2 py-1.5 font-bold">Last Event</th>
+                    <th class="border border-black px-2 py-1.5 font-bold text-center">Duration</th>
                     <th class="border border-black px-2 py-1.5 font-bold">Status Information</th>
                 </tr>
             </thead>
@@ -97,6 +99,7 @@
                             {{if .LastProblemStartISO}}<time datetime="{{.LastProblemStartISO}}">{{.LastProblemStartISO}}</time>{{else}}&mdash;{{end}}
                         {{end}}
                     </td>
+                    <td class="border border-black px-2 py-0.5 font-mono text-center text-gray-600">{{if .DowntimeDuration}}{{.DowntimeDuration}}{{else}}&mdash;{{end}}</td>
                     <td class="border border-black px-2 py-0.5 text-gray-700">
                         {{if .ActiveTriggers}}
                         {{range .ActiveTriggers}}
