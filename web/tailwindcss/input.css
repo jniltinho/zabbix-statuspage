@@ -36,10 +36,10 @@
 @layer components {
   #host-table {
     border-collapse: separate;
-    border-spacing: 0 2px;
+    border-spacing: 0 1px;
   }
   #host-table tbody tr:nth-child(odd)  { background-color: #ffffff; }
-  #host-table tbody tr:nth-child(even) { background-color: #f9fafb; }
+  #host-table tbody tr:nth-child(even) { background-color: #f3f4f6; }
   #host-table tbody tr[data-status="outage"]:nth-child(odd)    { background-color: #fef2f2; }
   #host-table tbody tr[data-status="outage"]:nth-child(even)   { background-color: #fde8e8; }
   #host-table tbody tr[data-status="degraded"]:nth-child(odd)  { background-color: #fefce8; }
