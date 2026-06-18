@@ -38,9 +38,5 @@
     border-collapse: collapse;
   }
   #host-table tbody tr:nth-child(odd)  { background-color: #ffffff; }
-  #host-table tbody tr:nth-child(even) { background-color: #f3f4f6; }
-  #host-table tbody tr[data-status="outage"]:nth-child(odd)    { background-color: #fef2f2; }
-  #host-table tbody tr[data-status="outage"]:nth-child(even)   { background-color: #fde8e8; }
-  #host-table tbody tr[data-status="degraded"]:nth-child(odd)  { background-color: #fefce8; }
-  #host-table tbody tr[data-status="degraded"]:nth-child(even) { background-color: #fef9c3; }
+  #host-table tbody tr:nth-child(even) { background-color: #e5e7eb; }
 }

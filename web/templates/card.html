@@ -40,17 +40,21 @@
     {{end}}
 
     {{/* Name */}}
-    <span class="font-bold text-xs w-48 shrink-0">{{.Label}}</span>
+    <span class="font-bold text-xs flex-1 min-w-0 truncate">
+        {{if and .ZabbixBaseURL .HostID}}
+        <a href="{{.ZabbixBaseURL}}/zabbix.php?action=charts.view&filter_hostids[]={{.HostID}}&filter_show=0&filter_set=1" target="_blank" class="hover:text-blue-700 hover:underline">{{.Label}}</a>
+        {{else}}{{.Label}}{{end}}
+    </span>
 
     {{/* Uptime % badge */}}
     <span class="text-[10px] font-mono text-gray-500 shrink-0 w-24">↗ 24h {{printf "%.2f" .UptimePct}}%</span>
 
     {{/* Status badge with severity inline */}}
-    <span class="shrink-0 w-36 text-center text-[10px] font-semibold px-2 py-0.5 border border-black
+    <span class="shrink-0 w-20 text-center text-[10px] font-semibold py-0.5 border border-black
         {{if eq .StatusLabel "Outage"}}bg-red-500 text-white
         {{else if eq .StatusLabel "Degraded"}}bg-[#ffd500] text-black
         {{else}}bg-[#00c950] text-black{{end}}">
-        {{.StatusLabel}}{{if .SeverityLabel}} - {{.SeverityLabel}}{{end}}
+        {{if eq .StatusLabel "Outage"}}CRITICAL{{else if eq .StatusLabel "Degraded"}}{{if .SeverityLabel}}{{.SeverityLabel}}{{else}}Degraded{{end}}{{else}}{{.StatusLabel}}{{end}}
     </span>
 
     {{/* Uptime bar */}}

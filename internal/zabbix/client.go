@@ -15,6 +15,7 @@ type Tag struct {
 }
 
 type Host struct {
+	HostID      string `json:"hostid"`
 	Host        string `json:"host"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -251,7 +252,7 @@ func (c *Client) FetchEventsByHostIDs(hostIDs []string, timeFrom time.Time) ([]E
 		"time_from":   timeFrom.Unix(),
 		"sortfield":   []string{"clock", "eventid"},
 		"sortorder":   "DESC",
-		"selectHosts": []string{"host", "name", "description"},
+		"selectHosts": []string{"hostid", "host", "name", "description"},
 	}
 
 	var result []Event
@@ -302,7 +303,7 @@ func (c *Client) FetchEvents(timeFrom time.Time, tags []Tag) ([]Event, error) {
 		"time_from":   timeFrom.Unix(),
 		"sortfield":   []string{"clock", "eventid"},
 		"sortorder":   "DESC",
-		"selectHosts": []string{"host", "name", "description"},
+		"selectHosts": []string{"hostid", "host", "name", "description"},
 	}
 
 	var result []Event

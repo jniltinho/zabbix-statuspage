@@ -18,6 +18,7 @@ type HostData struct {
 	ZabbixHost     string
 	DisplayHost    string
 	HostID         string
+	ZabbixBaseURL  string
 	Label          string
 	Description    string
 	HasProblem     bool
@@ -379,6 +380,8 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			label := dh.DisplayName()
 			triggers := triggersByHost[dh.Host]
 			hd := buildHostData(dh.Host, label, dh.Description, triggers, eventsByHost, resolvedClocks, now)
+			hd.HostID = dh.HostID
+			hd.ZabbixBaseURL = zabbixBaseURL(h.cfg.Zabbix.APIURL)
 			hostLabels[dh.Host] = label
 			if hd.HasProblem {
 				summary.Problem++
@@ -470,6 +473,10 @@ func (h *StatusHandler) Handle(c *echo.Context) error {
 			}
 			hd := buildHostData(svc.ZabbixHost, label, desc, triggers, eventsByHost, resolvedClocks, now)
 			hd.DisplayHost = svc.DisplayHost
+			if len(triggers) > 0 && len(triggers[0].Hosts) > 0 {
+				hd.HostID = triggers[0].Hosts[0].HostID
+			}
+			hd.ZabbixBaseURL = zabbixBaseURL(h.cfg.Zabbix.APIURL)
 			hostLabels[svc.ZabbixHost] = label
 			if hd.HasProblem {
 				summary.Problem++
