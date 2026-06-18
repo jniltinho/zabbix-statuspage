@@ -26,9 +26,10 @@ type HostData struct {
 	UptimeBars     []bool
 	UptimePct      float64
 	Triggers       []zabbix.Trigger
-	ActiveTriggers []zabbix.Trigger
-	LastEventISO   string
-	LastEventName  string
+	ActiveTriggers      []zabbix.Trigger
+	LastEventISO        string
+	LastEventName       string
+	LastProblemStartISO string
 }
 
 type HistoryItem struct {

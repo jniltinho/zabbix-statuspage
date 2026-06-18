@@ -91,14 +91,21 @@
                         {{end}}
                     </td>
                     <td class="border border-black px-2 py-0.5 font-mono text-gray-500 whitespace-nowrap overflow-hidden">
-                        {{if .LastEventISO}}<time datetime="{{.LastEventISO}}">{{.LastEventISO}}</time>{{else}}&mdash;{{end}}
+                        {{if .ActiveTriggers}}
+                            {{if .LastEventISO}}<time datetime="{{.LastEventISO}}">{{.LastEventISO}}</time>{{else}}&mdash;{{end}}
+                        {{else}}
+                            {{if .LastProblemStartISO}}<time datetime="{{.LastProblemStartISO}}">{{.LastProblemStartISO}}</time>{{else}}&mdash;{{end}}
+                        {{end}}
                     </td>
                     <td class="border border-black px-2 py-0.5 text-gray-700">
                         {{if .ActiveTriggers}}
                         {{range .ActiveTriggers}}
                         <div>{{if .LastEvent.Name}}{{.LastEvent.Name}}{{else}}{{.Description}}{{end}}</div>
                         {{end}}
-                        {{else if .LastEventName}}<span class="text-gray-400">{{.LastEventName}}</span>
+                        {{else if .LastEventName}}
+                        <span class="text-gray-400">
+                            {{if .LastEventISO}}<time datetime="{{.LastEventISO}}">{{.LastEventISO}}</time> &mdash; {{end}}{{.LastEventName}}
+                        </span>
                         {{else}}&mdash;{{end}}
                     </td>
                 </tr>
