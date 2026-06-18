@@ -20,11 +20,8 @@
             <div>
                 <h1 class="text-xl font-bold tracking-tight">Host Status</h1>
                 <p class="text-xs text-gray-400 mt-0.5">
-                    Last Updated: <time datetime="{{.CurrentDateISO}}" data-time="true">{{.CurrentDateISO}}</time>,
-                    reloads every minute.
+                    Loaded <time datetime="{{.CurrentDateISO}}" data-time="true">{{.CurrentDateISO}}</time>, reloads every minute.
                 </p>
-                <p class="text-xs mt-1.5"><a href="/" class="underline hover:text-black text-gray-500">← Back to Status
-                        Page</a></p>
             </div>
             {{if .Summary.Problem}}
             <div class="border border-black bg-[#ffd500] px-3 py-2 flex items-center gap-4 neo-shadow-sm sm:min-w-64">
@@ -59,7 +56,7 @@
             {{end}}
         </div>
 
-        <hr class="border-gray-300 border-t mb-4">
+        <hr class="border-black border-t-2 mb-4">
 
         <!-- Table -->
         <div class="overflow-auto" style="max-height: calc(100vh - 450px);">
@@ -137,10 +134,14 @@
             Matching Hosts</p>
 
         <!-- Footer -->
-        <hr class="border-gray-200 mt-4 mb-3">
+        <hr class="border-gray-200 mt-2 mb-3">
         <footer class="flex justify-between items-center text-[10px] text-gray-400">
             <span class="font-mono">zabbix-statuspage {{.Version}}</span>
-            <a href="/" class="underline hover:text-black">← Back to Status Page</a>
+            <div class="flex gap-3">
+                <a href="/" class="underline hover:text-black">Normal</a>
+                <a href="/?compact=1" class="underline hover:text-black">Compact</a>
+                <a href="/?micro=1" class="underline hover:text-black">Micro</a>
+            </div>
         </footer>
 
     </div>
@@ -155,7 +156,7 @@
                 $e.innerHTML = date.toLocaleString();
             }
         });
-        { { if not.Debug} } setTimeout(function () { location.reload(); }, 60000); { { end } }
+        {{if not .Debug}}setTimeout(function(){ location.reload(); }, 60000);{{end}}
     </script>
 </body>
 
