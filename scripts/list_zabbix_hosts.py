@@ -2,8 +2,10 @@
 """List all Zabbix hosts in a tabular format showing ID, name, IP, and status."""
 
 import argparse
-import requests
+import csv
 import sys
+
+import requests
 
 
 class ZabbixAPI:
@@ -74,6 +76,8 @@ def main():
     parser.add_argument("--user", help="Zabbix username")
     parser.add_argument("--password", help="Zabbix password")
     parser.add_argument("--api-token", help="Zabbix API token (alternative to --user/--password)")
+    parser.add_argument("--csv", metavar="FILE", nargs="?", const="-",
+                        help="Output in CSV format; optionally write to FILE (omit for stdout)")
 
     args = parser.parse_args()
 
@@ -90,15 +94,50 @@ def main():
 
     hosts = zbx.get_hosts()
 
+    if args.csv is not None:
+        _write_csv(hosts, args.csv)
+    else:
+        _print_table(hosts)
+
+
+def _extract_ip(host):
+    if host.get("interfaces"):
+        return host["interfaces"][0].get("ip", "")
+    return ""
+
+
+def _extract_groups(host):
+    return ";".join(g["name"] for g in host.get("groups", []))
+
+
+def _write_csv(hosts, dest):
+    fields = ["hostid", "host", "ip", "status"]
+
+    def write(f):
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        for host in hosts:
+            writer.writerow({
+                "hostid": host["hostid"],
+                "host": host["host"],
+                "ip": _extract_ip(host),
+                "status": "Enabled" if host["status"] == "0" else "Disabled",
+            })
+
+    if dest == "-":
+        write(sys.stdout)
+    else:
+        with open(dest, "w", newline="", encoding="utf-8") as f:
+            write(f)
+        print(f"Saved {len(hosts)} hosts to {dest}")
+
+
+def _print_table(hosts):
     print(f"{'HOSTID':<8} {'HOST':<40} {'IP':<18} STATUS")
     print("-" * 90)
 
     for host in hosts:
-        ip = ""
-
-        if host.get("interfaces"):
-            ip = host["interfaces"][0].get("ip", "")
-
+        ip = _extract_ip(host)
         status = "Enabled" if host["status"] == "0" else "Disabled"
 
         print(
